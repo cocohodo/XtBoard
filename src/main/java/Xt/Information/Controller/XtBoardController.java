@@ -11,4 +11,9 @@ public class XtBoardController {
 
         return "index"; // templates/index.html 로 연결
     }
+
+    @GetMapping("/mdis")
+    public String mdis(Model model) {
+        return "mdis";
+    }
 }
