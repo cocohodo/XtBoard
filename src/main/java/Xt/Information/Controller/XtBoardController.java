@@ -13,7 +13,7 @@ public class XtBoardController {
     }
 
     @GetMapping("/chdis")
-    public String mdis(Model model) {
+    public String chdis(Model model) {
 
         return "chdis";
     }
