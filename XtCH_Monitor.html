@@ -2,9 +2,53 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>XtCH Monitor</title>
+  <title>Xt Monitor</title>
   <style>
-   button {
+    .homeBtn{
+      margin: 30px auto;
+    }
+
+    .tab-container {
+      width: 100%;
+      margin: 20px auto;
+      margin-top: 30px;
+    }
+
+    .tabs {
+      display: flex;
+      border-bottom: 2px solid #ccc;
+    }
+
+    .tab {
+      padding: 10px 20px;
+      cursor: pointer;
+      border: 1px solid #ccc;
+      border-bottom: none;
+      background-color: #f1f1f1;
+      margin-right: 5px;
+    }
+
+    .tab.active {
+      background-color: #fff;
+      font-weight: bold;
+      border-top: 2px solid #007bff;
+      border-right: 1px solid #ccc;
+      border-left: 1px solid #ccc;
+    }
+
+    .tab-content {
+      display: none;
+      border: 1px solid #ccc;
+      padding: 15px;
+      background-color: #fff;
+      min-height: 750px;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+    
+    button {
       background-color: #e0e0e0;
       color: #333;
       border: 1px solid #bbb;
@@ -133,8 +177,16 @@
   </style>
 </head>
 <body>
-  <button onclick="goToPage('')">Home</button>
-  <h2>XtCH Monitor</h2>
+<button onclick="goToPage('')" id="homeBtn">Home</button>
+<div class="tab-container">
+  <div class="tabs">
+    <div class="tab active" onclick="showTab(0)">탭 1</div>
+    <div class="tab" onclick="showTab(1)">탭 2</div>
+    <div class="tab" onclick="showTab(2)">탭 3</div>
+  </div>
+
+  <div class="tab-content active">
+    <h2>XtCH Monitor</h2>
   <!-- <input type="text" id="msg" placeholder="Type a message"> -->
   <div style="display: inline-flex; align-items: center;">
     <label for="intervalInput">요청 간격 : </label>
@@ -147,7 +199,7 @@
       max="9999"
       step="1"
       oninput="limitDigits(this)"
-      style="text-align: right; padding-right: 30px; width: 80px; margin-left: 6px;"
+      style="text-align: right; padding-right: 30px; width: 45px; margin-left: 6px;"
       >
       <span style="
         position: absolute;
@@ -159,7 +211,7 @@
         font-size: 12px;
       ">sec</span>
       </div>
-    <button id="start_button" onclick="toggleRequest()">Start</button>
+    <button id="start_button" onclick="toggleRequest()">Send</button>
     <span id="search_sec">5초마다 조회 중</span>
   </div>
   <!-- <button id="start_button" onclick="toggleRequest()">Start</button> -->
@@ -202,21 +254,25 @@
       <ul>
         <li><b>초기 동작:</b> 페이지 열면 자동으로 조회가 시작됩니다. (5초 간격)</li>
         <br>
-        <li><b>Start/Stop:</b> 데이터 수신을 시작하거나 멈출 수 있습니다.</li>
-        <b>		- Stop:</b> 클릭시, 데이터 수신을 멈춥니다.
-	<br>
-        <b>		- Start:</b> 클릭시, 데이터 수신을 시작 후, 5초마다 데이터 수신합니다다.
+        <li><b>send:</b> 데이터 수신을 시작하거나 멈출 수 있습니다.</li>
+        <b>		- 1 ~ 9999(단위 : 초) :</b> 해당 숫자(단위 : 초) 마다 데이터 수신합니다.
+	      <br>
+        <b>		- 0 (단위 : 초) :</b> 데이터 수신을 멈춥니다.
         <br>
-	 <br>
+	      <br>
         <li><b>최종 수신 시간:</b> 마지막으로 서버에서 데이터를 받은 시간입니다.</li>
         <br>
         <li><b>연결 상태:</b> 웹소켓 연결 상태를 보여줍니다 (Connected/Disconnected)</li>
       </ul>
     </div>
   </div>
+  </div>
+  <div class="tab-content">이곳은 <strong>탭 2</strong> 내용입니다.</div>
+  <div class="tab-content">이곳은 <strong>탭 3</strong> 내용입니다.</div>
+</div>
 
-  <script>
-    let fullData = [];
+<script>
+  let fullData = [];
     let currentPage = 1;
     const rowsPerPage = 20;
 
@@ -241,9 +297,7 @@
       const payloadArray = parseData(event.data);
       fullData = payloadArray;
       renderTablePage(1);
-      if(start_button.innerText === "Stop"){
-        last_time.innerText = new Date().toLocaleString();
-      }
+      last_time.innerText = new Date().toLocaleString();
     };
 
     function parseData(raw) {
@@ -256,33 +310,33 @@
       }
     }
 
-    function sendMessage(sendFlag) {
-      if (sendFlag) {
+    function sendMessage() {
+      // if (sendFlag) {
         const msg = document.getElementById("intervalInput").value;
         const json = { interval: msg };
         ws.send(JSON.stringify(json));
-      } else {
-        const json = { interval: "0" };
-        ws.send(JSON.stringify(json));
-      }
+      // } else {
+        // const json = { interval: "0" };
+        // ws.send(JSON.stringify(json));
+      // }
     }
 
     function toggleRequest() {
       const start_button = document.getElementById("start_button");
       const search_sec = document.getElementById("search_sec");
       const msg = document.getElementById("intervalInput").value;
-      if (liveRequest) {
-        start_button.innerText = "Start";
+      if (msg === "0") {
+        // start_button.innerText = "Send";
+        // sendMessage(false);
         search_sec.innerText = "현재 조회 중지 상태"
-        sendMessage(false);
-        clearInterval(intervalId);
-        intervalId = null;
+        // clearInterval(intervalId);
+        // intervalId = null;
       } else {
-        start_button.innerText = "Stop";
         search_sec.innerText = msg + "초마다 조회 중"
-        sendMessage(true);
+        // start_button.innerText = "Stop";
         // intervalId = setInterval(sendMessage, 5000);
       }
+      sendMessage();
       liveRequest = !liveRequest;
     }
 
@@ -422,6 +476,17 @@
         input.value = 9999;
       }
     }
-  </script>
+    
+  function showTab(index) {
+    const tabs = document.querySelectorAll(".tab");
+    const contents = document.querySelectorAll(".tab-content");
+
+    tabs.forEach((tab, i) => {
+      tab.classList.toggle("active", i === index);
+      contents[i].classList.toggle("active", i === index);
+    });
+  }
+</script>
+
 </body>
 </html>
