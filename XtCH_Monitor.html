@@ -174,15 +174,24 @@
     input[type=number] {
       -moz-appearance: textfield; /* Firefox에서 숫자 스핀 제거 방지 */
     }
+
+    .status-accept { background-color: #c0eafd; color: #007acc; font-weight: bold; }
+    .status-wait   { background-color: #fdf2ba; color: #d48806; font-weight: bold; }
+    .status-prepare{ background-color: #f8b4cf; color: #c41d7f; font-weight: bold; }
+    .status-full   { background-color: #fab4ae; color: #cf1322; font-weight: bold; }
+    .status-down   { background-color: #d8d8d8; color: #8c8c8c; font-weight: bold; }
   </style>
 </head>
 <body>
 <button onclick="goToPage('')" id="homeBtn">Home</button>
 <div class="tab-container">
   <div class="tabs">
-    <div class="tab active" onclick="showTab(0)">탭 1</div>
-    <div class="tab" onclick="showTab(1)">탭 2</div>
-    <div class="tab" onclick="showTab(2)">탭 3</div>
+    <div class="tab active" onclick="showTab(0)">chdis</div>
+    <div class="tab" onclick="showTab(1)">amdis</div>
+    <div class="tab" onclick="showTab(2)">busdis</div>
+    <div class="tab" onclick="showTab(3)">mdis</div>
+    <div class="tab" onclick="showTab(4)">trdis</div>
+    <div class="tab" onclick="showTab(5)">pushdis</div>
   </div>
 
   <div class="tab-content active">
@@ -382,9 +391,36 @@
           data.ResetFlag,
           data.RunTime
         ];
-        rowData.forEach(val => {
+        rowData.forEach((val, index) => {
           const cell = document.createElement("td");
-          cell.textContent = val ?? "-";
+          // Status 컬럼이면 변환
+          if (index === 7) {
+            const statusTextMap = {
+              1: "ACCEPT",
+              2: "WAIT",
+              3: "PREPARE",
+              4: "FULL",
+              5: "DOWN"
+            };
+
+            const statusClassMap = {
+              1: "status-accept",
+              2: "status-wait",
+              3: "status-prepare",
+              4: "status-full",
+              5: "status-down"
+            };
+
+            const statusText = statusTextMap[val] ?? "UNKNOWN";
+            const statusClass = statusClassMap[val];
+
+            cell.textContent = statusText;
+            if (statusClass) {
+              cell.classList.add(statusClass);
+            }
+          } else {
+            cell.textContent = val ?? "-";
+          }
           row.appendChild(cell);
         });
         logTable.appendChild(row);
