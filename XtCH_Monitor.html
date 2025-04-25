@@ -2,7 +2,6 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <script src="./navbar.js" defer></script>
   <title>XtCH Monitor</title>
   <style>
    button {
@@ -16,6 +15,7 @@
       transition: background-color 0.2s ease, box-shadow 0.2s ease;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
       margin-right: 6px;
+      margin-left: 6px;
     }
     
     button:hover {
@@ -34,46 +34,11 @@
       cursor: not-allowed;
     }
 
-
     body {
       font-family: Arial, sans-serif;
-      display: flex;
-      padding: 0;
-      margin: 0;
-      width: 100vw;
-      height: 100%;
+      padding: 20px;
       background-color: #f9f9f9;
       font-size: 12px;
-    }
-
-    .layout {
-      display: flex;
-      height: 100%;
-    }
-
-    .content {
-      flex: 1;
-      background-color: #f9f9f9;
-      padding: 1em;
-      overflow-y: auto;
-      padding-left: 50px;
-      margin-left: 0; /* 기본값 */
-      transition: margin-left 0.3s ease;
-    }
-
-    .content.fixed {
-      margin-left: 20vw;
-    }
-
-    @media (max-width: 600px) {
-      .content.fixed {
-        margin-left: 60vw;
-      }
-    }
-
-    my-navbar {
-      width: 0;
-      min-width: 0px; /* 작을 때를 위한 최소 너비 */
     }
 
     h2 {
@@ -85,7 +50,6 @@
       margin: 20px auto;
       border-collapse: collapse;
       table-layout: fixed;
-      max-height: 500px;
     }
 
     th, td {
@@ -109,10 +73,10 @@
     }
 
     #tableContainer {
-      max-height: 550px;
       overflow-y: auto;
       display: flex;
       justify-content: center;
+      max-height: 550px;
     }
 
     input, button {
@@ -120,7 +84,6 @@
       padding: 4px 8px;
     }
 
-    /* 모달 스타일 */
     .modal {
       display: none;
       position: fixed;
@@ -157,48 +120,81 @@
     .useInfo{
         color: red; 
     }
+
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+      opacity: 1;
+      display: inline;
+    }
+
+    input[type=number] {
+      -moz-appearance: textfield; /* Firefox에서 숫자 스핀 제거 방지 */
+    }
   </style>
 </head>
 <body>
-  <div class="layout">
-    <my-navbar></my-navbar>
-    <div class="content">
-      <button onclick="goToPage('')">Home</button>
-      <h2>XtCH Monitor</h2>
-      <input type="text" id="msg" placeholder="Type a message">
-      <button id="start_button" onclick="toggleRequest()">Start</button>
-      <span>최종 수신 시간: </span>
-      <span id="last_time"></span>
-      <div id="connect"></div>
-      <button onclick="openModal()">사용설명</button>
-      <span class="useInfo">*사용 전 확인</span>
-
-      <div id="log_container">
-        <div id="tableContainer">
-          <table>
-            <thead>
-              <tr>
-                <th>인덱스</th>
-                <th>Accept-FD</th>
-                <th>총 스레드 개수</th>
-                <th>사용 스레드 개수</th>
-                <th>Tr count</th>
-                <th>프로세스 ID</th>
-                <th>Runing count</th>
-                <th>상태</th>
-                <th>ResetFlag</th>
-                <th>런타임</th>
-              </tr>
-            </thead>
-            <tbody id="logTableBody">
-            </tbody>
-          </table>
-        </div>
+  <button onclick="goToPage('')">Home</button>
+  <h2>XtCH Monitor</h2>
+  <!-- <input type="text" id="msg" placeholder="Type a message"> -->
+  <div style="display: inline-flex; align-items: center;">
+    <label for="intervalInput">요청 간격 : </label>
+    <div style="position: relative; display: inline-block;">
+      <input
+      type="number"
+      id="intervalInput"
+      value="5"
+      min="1"
+      max="9999"
+      step="1"
+      oninput="limitDigits(this)"
+      style="text-align: right; padding-right: 30px; width: 80px; margin-left: 6px;"
+      >
+      <span style="
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+        color: #555;
+        font-size: 12px;
+      ">sec</span>
       </div>
-      <div id="pagination" style="text-align: center; margin-top: 10px;"></div>
+    <button id="start_button" onclick="toggleRequest()">Start</button>
+    <span id="search_sec">5초마다 조회 중</span>
+  </div>
+  <!-- <button id="start_button" onclick="toggleRequest()">Start</button> -->
+   <div>
+     <span>최종 수신 시간: </span>
+     <span id="last_time"></span>
+   </div>
+  <div id="connect"></div>
+  <button onclick="openModal()">사용설명</button>
+  <span class="useInfo">*사용 전 확인</span>
+
+  <div id="log_container">
+    <div id="tableContainer">
+      <table>
+        <thead>
+          <tr>
+            <th>인덱스</th>
+            <th>Accept-FD</th>
+            <th>총 스레드 개수</th>
+            <th>사용 스레드 개수</th>
+            <th>Tr count</th>
+            <th>프로세스 ID</th>
+            <th>Runing count</th>
+            <th>상태</th>
+            <th>ResetFlag</th>
+            <th>런타임</th>
+          </tr>
+        </thead>
+        <tbody id="logTableBody"></tbody>
+      </table>
     </div>
   </div>
-  <!-- 모달 팝업 -->
+  <div id="pagination" style="text-align: center; margin-top: 10px;"></div>
+
+    <!-- 모달 팝업 -->
   <div id="helpModal" class="modal" >
     <div class="modal-content">
       <span class="close" onclick="closeModal()">&times;</span>
@@ -218,7 +214,6 @@
       </ul>
     </div>
   </div>
-</body>
 
   <script>
     let fullData = [];
@@ -231,81 +226,69 @@
     const logTable = document.getElementById("logTableBody");
     let liveRequest = false;
     let intervalId = null;
-
-    // ws.onopen = () => {
-    //   connect.innerHTML = "<p><b>연결 상태 : Connected</b></p>";
-    //   toggleRequest(); // 자동 시작
-    //};
+    
+      ws.onopen = () => {
+      connect.innerHTML = "<p><b>연결 상태 : Connected</b></p>";
+      toggleRequest();
+    };
+	
     ws.onclose = () => {
       connect.innerHTML = "<p><b>연결 상태 : Disconnected</b></p>";
     };
-    // ws.onmessage = (event) => {
-    //   logTable.innerHTML = "";
-    //   const payloadArray = parseData(event.data);
 
-    //   payloadArray.forEach(data => {
-    //     const row = document.createElement("tr");
-    //     const rowData = [
-    //       data.id,
-    //       data.PipeFd,
-    //       data.ThreadCount,
-    //       data.RunThreadCount,
-    //       data.TotalTrCount,
-    //       data.ProcessID,
-    //       data.RunningCount,
-    //       data.Status,
-    //       data.ResetFlag,
-    //       data.RunTime
-    //     ];
-    //     rowData.forEach(val => {
-    //       const cell = document.createElement("td");
-    //       cell.textContent = val ?? "-";
-    //       row.appendChild(cell);
-    //     });
-    //     logTable.appendChild(row);
-    //   });
-
-    //   document.getElementById("tableContainer").scrollTop = document.getElementById("tableContainer").scrollHeight;
-    //   last_time.innerText = new Date().toLocaleString();
-    // };
+    ws.onmessage = (event) => {
+      const start_button = document.getElementById("start_button");
+      const payloadArray = parseData(event.data);
+      fullData = payloadArray;
+      renderTablePage(1);
+      if(start_button.innerText === "Stop"){
+        last_time.innerText = new Date().toLocaleString();
+      }
+    };
 
     function parseData(raw) {
       try {
         const obj = JSON.parse(raw);
-        return obj.payload || [];
+        return obj.interval || [];
       } catch (e) {
         console.error("Invalid JSON:", raw);
         return [];
       }
     }
 
-    function sendMessage() {
-      const msg = document.getElementById("msg").value;
-      const json = { data: msg };
-      ws.send(JSON.stringify(json));
+    function sendMessage(sendFlag) {
+      if (sendFlag) {
+        const msg = document.getElementById("intervalInput").value;
+        const json = { interval: msg };
+        ws.send(JSON.stringify(json));
+      } else {
+        const json = { interval: "0" };
+        ws.send(JSON.stringify(json));
+      }
     }
 
     function toggleRequest() {
       const start_button = document.getElementById("start_button");
+      const search_sec = document.getElementById("search_sec");
+      const msg = document.getElementById("intervalInput").value;
       if (liveRequest) {
         start_button.innerText = "Start";
+        search_sec.innerText = "현재 조회 중지 상태"
+        sendMessage(false);
         clearInterval(intervalId);
         intervalId = null;
       } else {
         start_button.innerText = "Stop";
-        sendMessage();
-        intervalId = setInterval(sendMessage, 5000);
+        search_sec.innerText = msg + "초마다 조회 중"
+        sendMessage(true);
+        // intervalId = setInterval(sendMessage, 5000);
       }
       liveRequest = !liveRequest;
     }
 
     function goToPage(page) {
-      const baseUrl = "./";
+      const baseUrl = "/";
       window.location.href = baseUrl + page;
-    }
-    function toggleFixed() {
-      window.navFixed = !window.navFixed;
-      document.querySelector("my-navbar").updateFixedClass();
     }
 
     function openModal() {
@@ -316,16 +299,15 @@
       document.getElementById("helpModal").style.display = "none";
     }
 
-    // ESC 키로 모달 닫기
     window.addEventListener("keydown", function (e) {
       if (e.key === "Escape") closeModal();
     });
 
-    // 모달 바깥 클릭 시 닫기
     window.onclick = function(event) {
       const modal = document.getElementById("helpModal");
       if (event.target === modal) closeModal();
     }
+
     function renderTablePage(page) {
       logTable.innerHTML = "";
       const start = (page - 1) * rowsPerPage;
@@ -395,31 +377,51 @@
       pagination.appendChild(nextBtn);
     }
 // 더미 데이터 생성 후 테스트
-    function generateDummyData(count) {
-       const dummy = [];
-       for (let i = 0; i < count; i++) {
-         dummy.push({
-           id: i + 1,
-           PipeFd: Math.floor(Math.random() * 100),
-           ThreadCount: Math.floor(Math.random() * 10 + 1),
-           RunThreadCount: Math.floor(Math.random() * 10),
-           TotalTrCount: Math.floor(Math.random() * 1000),
-           ProcessID: Math.floor(Math.random() * 5000),
-           RunningCount: Math.floor(Math.random() * 50),
-           Status: i % 3 === 0 ? "Running" : "Idle",
-           ResetFlag: i % 2,
-           RunTime: `${Math.floor(Math.random() * 10)}h ${Math.floor(Math.random() * 60)}m`
-         });
-       }
-       return dummy;
-     }
 
-     window.onload = () => {
-       fullData = generateDummyData(500); // 150개 더미 데이터 생성
-       renderTablePage(1); // 첫 페이지 렌더링
-       last_time.innerText = new Date().toLocaleString();
-       connect.innerHTML = "<p><b>연결 상태 : Dummy Data Mode</b></p>";
-     };
+    //  function generateDummyData(count) {
+    //    const dummy = [];
+    //    for (let i = 0; i < count; i++) {
+    //      dummy.push({
+    //        id: i + 1,
+    //        PipeFd: Math.floor(Math.random() * 100),
+    //        ThreadCount: Math.floor(Math.random() * 10 + 1),
+    //        RunThreadCount: Math.floor(Math.random() * 10),
+    //        TotalTrCount: Math.floor(Math.random() * 1000),
+    //        ProcessID: Math.floor(Math.random() * 5000),
+    //        RunningCount: Math.floor(Math.random() * 50),
+    //        Status: i % 3 === 0 ? "Running" : "Idle",
+    //        ResetFlag: i % 2,
+    //        RunTime: `${Math.floor(Math.random() * 10)}h ${Math.floor(Math.random() * 60)}m`
+    //      });
+    //    }
+    //    return dummy;
+    //  }
+
+    //  window.onload = () => {
+    //    fullData = generateDummyData(500); // 150개 더미 데이터 생성
+    //    renderTablePage(1); // 첫 페이지 렌더링
+    //    last_time.innerText = new Date().toLocaleString();
+    //    connect.innerHTML = "<p><b>연결 상태 : Dummy Data Mode</b></p>";
+    //  };
+    //  function limitDigits(input) {
+    //     if (input.value.length > 4) {
+    //       input.value = input.value.slice(0, 4);  // 최대 4자리까지만 입력 가능
+    //     }
+    //     if (parseInt(input.value) > 9999) {
+    //       input.value = 9999;  // 값이 너무 크면 9999로 고정
+    //     }
+    //   }
+
+    function limitDigits(input) {
+      // 최대 4자리까지만 허용
+      if (input.value.length > 4) {
+        input.value = input.value.slice(0, 4);
+      }
+      // 최대값 보정
+      if (parseInt(input.value) > 9999) {
+        input.value = 9999;
+      }
+    }
   </script>
 </body>
 </html>
