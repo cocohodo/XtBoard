@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Xt Monitor</title>
+  <style>
+    .homeBtn{
+      margin: 30px auto;
+    }
+
+    .tab-container {
+      width: 100%;
+      margin: 20px auto;
+      margin-top: 30px;
+    }
+
+    .tabs {
+      margin-top: 20px;
+      display: flex;
+      border-bottom: 2px solid #ccc;
+    }
+
+    .tab {
+      padding: 10px 20px;
+      cursor: pointer;
+      border: 1px solid #ccc;
+      border-bottom: none;
+      background-color: #f1f1f1;
+      margin-right: 5px;
+    }
+
+    .tab.active {
+      background-color: #fff;
+      font-weight: bold;
+      border-top: 2px solid #007bff;
+      border-right: 1px solid #ccc;
+      border-left: 1px solid #ccc;
+    }
+
+    .tab-content {
+      /* display: none; */
+      border: 1px solid #ccc;
+      padding: 15px;
+      background-color: #fff;
+      min-height: 750px;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+    
+    button {
+      background-color: #e0e0e0;
+      color: #333;
+      border: 1px solid #bbb;
+      border-radius: 4px;
+      padding: 6px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background-color 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      margin-right: 6px;
+      margin-left: 6px;
+    }
+    
+    button:hover {
+      background-color: #d5d5d5;
+    }
+    
+    button:active {
+      background-color: #c0c0c0;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+    }
+    
+    button:disabled {
+      background-color: #f2f2f2;
+      color: #999;
+      border-color: #ddd;
+      cursor: not-allowed;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f9f9f9;
+      font-size: 12px;
+    }
+
+    h2 {
+      text-align: center;
+    }
+
+    table {
+      width: 80%;
+      margin: 20px auto;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 4px;
+      text-align: center;
+      word-wrap: break-word;
+    }
+
+    th {
+      background-color: #333;
+      color: white;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      font-size: 12px;
+    }
+
+    tbody tr:nth-child(even) {
+      background-color: #f1f1f1;
+    }
+
+    #tableContainer {
+      overflow-y: auto;
+      display: flex;
+      justify-content: center;
+      max-height: 550px;
+    }
+
+    input, button {
+      font-size: 12px;
+      padding: 4px 8px;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.5);
+    }
+
+    .modal-content {
+      background-color: #fff;
+      margin: 15% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 500px;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .close:hover {
+      color: black;
+    }
+    .useInfo{
+        color: red; 
+    }
+
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+      opacity: 1;
+      display: inline;
+    }
+
+    input[type=number] {
+      -moz-appearance: textfield; /* Firefox에서 숫자 스핀 제거 방지 */
+    }
+
+    .status-accept { background-color: #c0eafd; color: #007acc; font-weight: bold; }
+    .status-wait   { background-color: #fdf2ba; color: #d48806; font-weight: bold; }
+    .status-prepare{ background-color: #f8b4cf; color: #c41d7f; font-weight: bold; }
+    .status-full   { background-color: #fab4ae; color: #cf1322; font-weight: bold; }
+    .status-down   { background-color: #d8d8d8; color: #8c8c8c; font-weight: bold; }
+  </style>
+</head>
+<body>
+<button onclick="goToPage('')" id="homeBtn">Home</button>
+<div class="tabs">
+  <div class="tab active" onclick="loadTabContent(0, 'XtCH_Monitor_tab1.html')">XtCH</div>
+  <div class="tab" onclick="loadTabContent(1, 'tab2.html')">탭 2</div>
+  <div class="tab" onclick="loadTabContent(2, 'tab3.html')">탭 3</div>
+</div>
+
+<div id="tabContent" class="tab-content">
+  <!-- 여기에 탭 내용이 들어옵니다 -->
+</div>
+
+<script>
+    let fullData = [];
+    let logTable = null;
+    let last_time = null;  // ✅ 전역 변수로 선언
+    let currentPage = 1;
+    const rowsPerPage = 20;
+    let lastReceivedTime = null; // 마지막으로 데이터를 받은 시간
+    let disFlag = 0;
+
+    const ws = new WebSocket("ws://211.240.28.240:30145/ms/");
+    // const last_time = document.getElementById("last_time");
+    const connect = document.getElementById("connect");
+    // const logTable = document.getElementById("logTableBody");
+    let liveRequest = false;
+    let intervalId = null;
+    
+        // 초기 탭 로딩
+    ws.onopen = () => {
+      const connect = document.getElementById("connect");
+      if (connect) {
+        connect.innerHTML = "<p><b>연결 상태 : Connected</b></p>";
+      } else {
+        console.warn("connect 요소를 찾을 수 없습니다.");
+      }
+      toggleRequest();
+    };
+    
+    window.onload = () => {
+      const connect = document.getElementById("connect");
+      if (connect) {
+        connect.innerHTML = "<p><b>연결 상태 : Waiting for Connection...</b></p>";
+      } else {
+        console.warn("connect 요소를 찾을 수 없습니다.");
+      }
+      loadTabContent(0, 'XtCH_Monitor_tab1.html');  
+    };
+	
+    ws.onclose = () => {
+      connect.innerHTML = "<p><b>연결 상태 : Disconnected</b></p>";
+    };
+
+    ws.onmessage = (event) => {
+      const payloadArray = parseData(event.data);
+      fullData = payloadArray;
+      if (logTable) renderTablePage(1);
+      if (last_time) last_time.innerText = new Date().toLocaleString();
+    };
+
+
+    function parseData(raw) {
+      try {
+        const obj = JSON.parse(raw);
+        return obj.interval || [];
+      } catch (e) {
+        console.error("Invalid JSON:", raw);
+        return [];
+      }
+    }
+
+    function sendMessage() {
+      // if (sendFlag) {
+        const msg = document.getElementById("intervalInput").value;
+        const json = {  interval: msg,
+          dis_type : disFlag+1
+         };
+        ws.send(JSON.stringify(json));
+      // } else {
+        // const json = { interval: "0" };
+        // ws.send(JSON.stringify(json));
+      // }
+    }
+
+    function toggleRequest() {
+      const start_button = document.getElementById("start_button");
+      const search_sec = document.getElementById("search_sec");
+      const msg = document.getElementById("intervalInput").value;
+      if (msg === "0") {
+        // start_button.innerText = "Send";
+        // sendMessage(false);
+        search_sec.innerText = "현재 조회 중지 상태"
+        // clearInterval(intervalId);
+        // intervalId = null;
+      } else {
+        search_sec.innerText = msg + "초마다 조회 중"
+        // start_button.innerText = "Stop";
+        // intervalId = setInterval(sendMessage, 5000);
+      }
+      sendMessage();
+      liveRequest = !liveRequest;
+    }
+
+    function goToPage(page) {
+      const baseUrl = "/";
+      window.location.href = baseUrl + page;
+    }
+
+    function openModal() {
+      document.getElementById("helpModal").style.display = "block";
+    }
+
+    function closeModal() {
+      document.getElementById("helpModal").style.display = "none";
+    }
+
+    window.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") closeModal();
+    });
+
+    window.onclick = function(event) {
+      const modal = document.getElementById("helpModal");
+      if (event.target === modal) closeModal();
+    }
+
+    function renderTablePage(page) {
+      logTable.innerHTML = "";
+      const start = (page - 1) * rowsPerPage;
+      const end = start + rowsPerPage;
+      const pageData = fullData.slice(start, end);
+
+      pageData.forEach(data => {
+        const row = document.createElement("tr");
+        const rowData = [
+          data.id,
+          data.PipeFd,
+          data.ThreadCount,
+          data.RunThreadCount,
+          data.TotalTrCount,
+          data.ProcessID,
+          data.RunningCount,
+          data.Status,
+          data.ResetFlag,
+          data.RunTime
+        ];
+        rowData.forEach((val, index) => {
+          const cell = document.createElement("td");
+          // Status 컬럼이면 변환
+          if (index === 7) {
+            const statusTextMap = {
+              1: "ACCEPT",
+              2: "WAIT",
+              3: "PREPARE",
+              4: "FULL",
+              5: "DOWN"
+            };
+
+            const statusClassMap = {
+              1: "status-accept",
+              2: "status-wait",
+              3: "status-prepare",
+              4: "status-full",
+              5: "status-down"
+            };
+
+            const statusText = statusTextMap[val] ?? "UNKNOWN";
+            const statusClass = statusClassMap[val];
+
+            cell.textContent = statusText;
+            if (statusClass) {
+              cell.classList.add(statusClass);
+            }
+          } else {
+            cell.textContent = val ?? "-";
+          }
+          row.appendChild(cell);
+        });
+        logTable.appendChild(row);
+      });
+
+      currentPage = page;
+      createPagination();
+    }
+
+    function createPagination() {
+      const pagination = document.getElementById("pagination");
+      pagination.innerHTML = "";
+      const totalPages = Math.ceil(fullData.length / rowsPerPage);
+      const maxButtons = 5;
+	if(totalPages === 1){
+          return;
+      }
+
+      const prevBtn = document.createElement("button");
+      prevBtn.textContent = "이전";
+      prevBtn.disabled = currentPage === 1;
+      prevBtn.onclick = () => renderTablePage(currentPage - 1);
+      pagination.appendChild(prevBtn);
+
+      let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+      let endPage = startPage + maxButtons - 1;
+      if (endPage > totalPages) {
+        endPage = totalPages;
+        startPage = Math.max(1, endPage - maxButtons + 1);
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        const btn = document.createElement("button");
+        btn.textContent = i;
+        btn.disabled = i === currentPage;
+        btn.onclick = () => renderTablePage(i);
+        pagination.appendChild(btn);
+      }
+
+      const nextBtn = document.createElement("button");
+      nextBtn.textContent = "다음";
+      nextBtn.disabled = currentPage === totalPages;
+      nextBtn.onclick = () => renderTablePage(currentPage + 1);
+      pagination.appendChild(nextBtn);
+    }
+// 더미 데이터 생성 후 테스트
+
+    //  function generateDummyData(count) {
+    //    const dummy = [];
+    //    for (let i = 0; i < count; i++) {
+    //      dummy.push({
+    //        id: i + 1,
+    //        PipeFd: Math.floor(Math.random() * 100),
+    //        ThreadCount: Math.floor(Math.random() * 10 + 1),
+    //        RunThreadCount: Math.floor(Math.random() * 10),
+    //        TotalTrCount: Math.floor(Math.random() * 1000),
+    //        ProcessID: Math.floor(Math.random() * 5000),
+    //        RunningCount: Math.floor(Math.random() * 50),
+    //        Status: i % 3 === 0 ? "Running" : "Idle",
+    //        ResetFlag: i % 2,
+    //        RunTime: `${Math.floor(Math.random() * 10)}h ${Math.floor(Math.random() * 60)}m`
+    //      });
+    //    }
+    //    return dummy;
+    //  }
+
+    //  window.onload = () => {
+    //    fullData = generateDummyData(500); // 150개 더미 데이터 생성
+    //    renderTablePage(1); // 첫 페이지 렌더링
+    //    last_time.innerText = new Date().toLocaleString();
+    //    connect.innerHTML = "<p><b>연결 상태 : Dummy Data Mode</b></p>";
+    //  };
+    //  function limitDigits(input) {
+    //     if (input.value.length > 4) {
+    //       input.value = input.value.slice(0, 4);  // 최대 4자리까지만 입력 가능
+    //     }
+    //     if (parseInt(input.value) > 9999) {
+    //       input.value = 9999;  // 값이 너무 크면 9999로 고정
+    //     }
+    //   }
+
+    function limitDigits(input) {
+      // 최대 4자리까지만 허용
+      if (input.value.length > 4) {
+        input.value = input.value.slice(0, 4);
+      }
+      // 최대값 보정
+      if (parseInt(input.value) > 9999) {
+        input.value = 9999;
+      }
+    }
+    
+  function showTab(index) {
+    const tabs = document.querySelectorAll(".tab");
+    const contents = document.querySelectorAll(".tab-content");
+
+    tabs.forEach((tab, i) => {
+      tab.classList.toggle("active", i === index);
+      contents[i].classList.toggle("active", i === index);
+    });
+  }
+  async function loadTabContent(tabIndex, fileName) {
+  disFlag = tabIndex;
+  const tabs = document.querySelectorAll('.tab');
+  tabs.forEach((tab, i) => {
+    tab.classList.toggle('active', i === tabIndex);
+  });
+
+  const response = await fetch(fileName);
+  const content = await response.text();
+
+  document.getElementById('tabContent').innerHTML = content;
+
+  // ✅ HTML 삽입 후 DOM 요소 재참조
+  logTable = document.getElementById("logTableBody");
+  last_time = document.getElementById("last_time");
+
+  if (fullData.length > 0) {
+    renderTablePage(1);
+  }
+}
+
+
+</script>
+
+</body>
+</html>
