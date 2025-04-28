@@ -21,4 +21,4 @@ jobs:
         port: 4291
         key: ${{ secrets.DEPLOY_KEY }}
         source: "."
-        target: "/home/svnsrc/user/sanghyeon/websocket/pages"
+        target: "/home/svnsrc/user/sanghyeon/websocket/pages/test"
