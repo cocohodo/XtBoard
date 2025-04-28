@@ -188,7 +188,7 @@
 <div class="tabs">
   <div class="tab active" onclick="loadTabContent(0, 'XtCH_Monitor_tab1.html')">XtCH</div>
   <div class="tab" onclick="loadTabContent(1, 'XtAM_Monitor_tab2.html')">XtAM</div>
-  <div class="tab" onclick="loadTabContent(2, 'tab3.html')">탭 3</div>
+  <div class="tab" onclick="loadTabContent(2, 'XtBUS_Monitor_tab3.html')">XtBUS</div>
 </div>
 
 <div id="tabContent" class="tab-content">
@@ -203,7 +203,7 @@
     const rowsPerPage = 20; // 페이징 개수
     let connect;          // 현재 연결되어 있는지 표시 위치
     let disFlag = 0;
-    const ws_url = "ws://211.240.28.240:30145/ms/";
+    const ws_url = "ws://211.240.28.240:30245/ms/";
     let ws = new WebSocket(ws_url);
     
     // 처음에 접속하면 XtCH 로드
@@ -226,21 +226,27 @@
       ws.onmessage = (event) => {
         const payloadArray = parseData(event.data);
         fullData = payloadArray;
+        if(!logTable) {
+          console.error("데이터 테이블 로딩 Error");
+          return;
+        }
         // chdis, amdis 일 때
-        if (logTable && (disFlag === 1 || disFlag === 2)) renderTablePage(1);
-        // 다른 dis일 때
+        if (disFlag === 1 || disFlag === 2) renderTable(1);
+        // busdis일 때
+        else if (disFlag === 3) {
+
+        }
+
         if (last_time) last_time.innerText = new Date().toLocaleString();
       };
     }
     // 연결되었는지 표시
-    function connectConfig (params) {
-      connect = document.getElementById("connect");
-      connect.innerHTML = "<p><b>연결 상태 : Connected</b></p>";
-      if (connect) {
-        connect.innerHTML = "<p><b>연결 상태 : connected</b></p>";
+    function connectConfig (connection) {
+      if (connection) {
+        connect.innerHTML = "<p><b>연결 상태 : Connected</b></p>";
       } 
       else {
-        console.warn("connect 요소를 찾을 수 없습니다.");
+        connect.innerHTML = "<p><b>연결 상태 : Disconnected</b></p>";
       }
     }
 
@@ -313,13 +319,8 @@
       if (event.target === modal) closeModal();
     }
 
-    // chdis, amdis 테이블 렌더링
-    function renderTablePage(page) {
-      logTable.innerHTML = "";
-      const start = (page - 1) * rowsPerPage;
-      const end = start + rowsPerPage;
-      const pageData = fullData.slice(start, end);
-
+    // chdis, amdis 테이블 데이터 추가
+    function tableDataFill(pageData) {
       pageData.forEach(data => {
         const row = document.createElement("tr");
         const rowData = [
@@ -368,6 +369,42 @@
         });
         logTable.appendChild(row);
       });
+    }
+
+    // busdis 테이블 데이터 추가
+    function tableDataFill2(pageData) {
+      pageData.forEach(data => {
+        const row = document.createElement("tr");
+        const rowData = [
+          data.Descript,
+          data.QName,
+          data.RcvCnt,
+          data.DataLen,
+          data.DataNum,
+          data.ConfirmPos,
+          data.BlockSize,
+          data.CliCnt
+        ];
+        rowData.forEach((val, index) => {
+          const cell = document.createElement("td");
+          
+          row.appendChild(cell);
+        });
+        logTable.appendChild(row);
+      });
+    }
+
+    // 테이블 렌더링
+    function renderTable(page) {
+      logTable.innerHTML = "";
+      const start = (page - 1) * rowsPerPage;
+      const end = start + rowsPerPage;
+      const pageData = fullData.slice(start, end);
+
+      if(disFlag === 1 || disFlag === 2)
+        tableDataFill(pageData);  // chdis, amdis
+      else if (disFlag === 3)
+        tableDataFill2(pageData); // busdis
 
       currentPage = page;
       createPagination();
@@ -385,7 +422,7 @@
       const prevBtn = document.createElement("button");
       prevBtn.textContent = "이전";
       prevBtn.disabled = currentPage === 1;
-      prevBtn.onclick = () => renderTablePage(currentPage - 1);
+      prevBtn.onclick = () => renderTable(currentPage - 1);
       pagination.appendChild(prevBtn);
 
       let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
@@ -399,14 +436,14 @@
         const btn = document.createElement("button");
         btn.textContent = i;
         btn.disabled = i === currentPage;
-        btn.onclick = () => renderTablePage(i);
+        btn.onclick = () => renderTable(i);
         pagination.appendChild(btn);
       }
 
       const nextBtn = document.createElement("button");
       nextBtn.textContent = "다음";
       nextBtn.disabled = currentPage === totalPages;
-      nextBtn.onclick = () => renderTablePage(currentPage + 1);
+      nextBtn.onclick = () => renderTable(currentPage + 1);
       pagination.appendChild(nextBtn);
     }
 
@@ -448,22 +485,24 @@
         last_time = document.getElementById("last_time");
 
         if (fullData.length > 0) {
-          renderTablePage(1);
+          renderTable(1);
         }
 
         console.log("loadTab 이후, 웹소켓 상태 확인 후 toggleRequest 호출");
 
+        connect = document.getElementById("connect");
         // ✅ WebSocket이 열렸는지 먼저 체크
         if (ws.readyState === WebSocket.OPEN) {
             sendMessage();
-            connectConfig();
+            connectConfig(true);
         } else {
             console.log("WebSocket 연결 안 됨. onopen 때 toggleRequest 예정.");
+            connectConfig(false);
             // 소켓 재연결
             ws = new WebSocket(ws_url);
             ws.addEventListener('open', function once() {
                 sendMessage();
-                connectConfig();
+                connectConfig(true);
                 // 다시 호출되지 않게 이 이벤트 리스너를 제거
                 ws.removeEventListener('open', once);
             });
