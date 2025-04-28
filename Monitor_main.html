@@ -230,12 +230,7 @@
           console.error("데이터 테이블 로딩 Error");
           return;
         }
-        // chdis, amdis 일 때
-        if (disFlag === 1 || disFlag === 2) renderTable(1);
-        // busdis일 때
-        else if (disFlag === 3) {
-
-        }
+        renderTable(1);
 
         if (last_time) last_time.innerText = new Date().toLocaleString();
       };
@@ -376,18 +371,18 @@
       pageData.forEach(data => {
         const row = document.createElement("tr");
         const rowData = [
-          // data.Descript,
+          data.Description,
           data.QName,
           data.RcvCnt,
           data.DataLen,
           data.DataNum,
           data.ConfirmPos,
           data.BlockSize,
-          data.CliCnt
+          data.CliPos
         ];
-        rowData.forEach((val, index) => {
+        rowData.forEach((val) => {
           const cell = document.createElement("td");
-          cell.textContent = val ?? "-";
+          cell.textContent = val ?? "-";  // null or undefined면 "-" 출력
           row.appendChild(cell);
         });
         logTable.appendChild(row);
