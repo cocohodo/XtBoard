@@ -187,7 +187,7 @@
 <button onclick="goToPage('')" id="homeBtn">Home</button>
 <div class="tabs">
   <div class="tab active" onclick="loadTabContent(0, 'XtCH_Monitor_tab1.html')">XtCH</div>
-  <div class="tab" onclick="loadTabContent(1, 'tab2.html')">탭 2</div>
+  <div class="tab" onclick="loadTabContent(1, 'XtAM_Monitor_tab2.html')">XtAM</div>
   <div class="tab" onclick="loadTabContent(2, 'tab3.html')">탭 3</div>
 </div>
 
@@ -197,59 +197,54 @@
 
 <script>
     let fullData = [];
-    let logTable = null;
-    let last_time = null;  // ✅ 전역 변수로 선언
-    let currentPage = 1;
-    const rowsPerPage = 20;
-    let lastReceivedTime = null; // 마지막으로 데이터를 받은 시간
+    let logTable = null;  // 데이터 표시 위치
+    let last_time = null; // 모니터링 데이터 최종 수신 시간
+    let currentPage = 1;  // 현재 페이징 번호(기본값 1 페이지)
+    const rowsPerPage = 20; // 페이징 개수
+    let connect;          // 현재 연결되어 있는지 표시 위치
     let disFlag = 0;
-    let ws = null;
-    let liveRequest = false;
-    let intervalId = null;
+    const ws_url = "ws://211.240.28.240:30145/ms/";
+    let ws = new WebSocket(ws_url);
     
-    // function connectWebSocket() {
-    //   ws.onopen = () => {
-    //     console.log("WebSocket 연결 성공");
-    //     // 연결 성공 시 처리할 작업 추가
-    //   };
-    // }
-
-    // connectWebSocket();  // 처음 연결 시도
-    
-        // 초기 탭 로딩
-    // ws.onopen = () => {
-    //   // const connect = document.getElementById("connect");
-    //   // if (connect) {
-    //   //   connect.innerHTML = "<p><b>연결 상태 : Connected</b></p>";
-    //   // } else {
-    //   //   console.warn("connect 요소를 찾을 수 없습니다.");
-    //   // }
-    //   // sleep(500);
-    //   console.log("open");
-    //   toggleRequest();
-    // };
-    
+    // 처음에 접속하면 XtCH 로드
     window.onload = () => {
       console.log("onload");
+      websocketConfig();
       loadTabContent(0, 'XtCH_Monitor_tab1.html');  
-      const connect = document.getElementById("connect");
-      if (connect) {
-        connect.innerHTML = "<p><b>연결 상태 : Waiting for Connection...</b></p>";
-      } else {
-        console.warn("connect 요소를 찾을 수 없습니다.");
-        
-      }
     };
-    
-    document.addEventListener('DOMContentLoaded', function() {
-      const intervalInput = document.getElementById('intervalInput');
-      if (intervalInput) {
-        // 요소가 존재할 때만 작업 실행
-        console.log('intervalInput 요소를 찾았습니다.');
+    // 웹소켓 초기화 설정
+    function websocketConfig() {
+      ws.onopen = () => {
+        console.log("open");
+      };
+      ws.onerror = function(error) {
+        console.error("WebSocket Error: ", error);
+      };
+      ws.onclose = () => {
+        connect.innerHTML = "<p><b>연결 상태 : Disconnected</b></p>";
+      };
+      ws.onmessage = (event) => {
+        const payloadArray = parseData(event.data);
+        fullData = payloadArray;
+        // chdis, amdis 일 때
+        if (logTable && (disFlag === 1 || disFlag === 2)) renderTablePage(1);
+        // 다른 dis일 때
+        if (last_time) last_time.innerText = new Date().toLocaleString();
+      };
+    }
+    // 연결되었는지 표시
+    function connectConfig (params) {
+      connect = document.getElementById("connect");
+      connect.innerHTML = "<p><b>연결 상태 : Connected</b></p>";
+      if (connect) {
+        connect.innerHTML = "<p><b>연결 상태 : connected</b></p>";
+      } 
+      else {
+        console.warn("connect 요소를 찾을 수 없습니다.");
       }
-    });
+    }
 
-
+    // 데이터 받으면 json 파싱해서 배열로 반환
     function parseData(raw) {
       try {
         const obj = JSON.parse(raw);
@@ -260,31 +255,40 @@
       }
     }
 
-    function sendMessage() {
-      // if (sendFlag) {
-        const msg = document.getElementById("intervalInput").value;
-        const json = {  interval: msg,
-          dis_type : disFlag+1
-         };
-        ws.send(JSON.stringify(json));
-      console.log("snedMessage");
-    }
-    function sleep(ms) {
-      return new Promise(resolve => setTimeout(resolve, ms));
+    // 요청용 JSON 생성 함수
+    function buildJson() {
+      const json = {};
+
+      const intervalInput = document.getElementById("intervalInput");
+      if (intervalInput && intervalInput.value) {
+        json.interval = intervalInput.value;
+      }
+
+      const PfNameSelect = document.getElementById("PfName_index");
+      if (PfNameSelect && PfNameSelect.value) {
+        json.PfName = PfNameSelect.value;
+      }
+
+      if (typeof disFlag !== "undefined") {
+        json.dis_type = disFlag;
+      }
+
+      return json;
     }
 
-    function toggleRequest() {
-      const start_button = document.getElementById("start_button");
+    // 서버에 interval, dis_type, PfName 등 변경할 때 요청 보내는 함수
+    function sendMessage() {
+      // if (sendFlag) {
+      const interval_value = document.getElementById("intervalInput").value;
       const search_sec = document.getElementById("search_sec");
-      const intervalInput = document.getElementById("intervalInput");
-      console.log("toggle");
-      // intervalInput 요소가 존재하는지 확인
-      if (!intervalInput) {
-          console.error("intervalInput 요소를 찾을 수 없습니다.");
-          return;
+      if (interval_value === "0") {
+        search_sec.innerText = "조회 멈춤";
       }
-      sendMessage(); // 데이터 전송 함수 호출
-      liveRequest = !liveRequest; // 요청 상태 토글
+      else {
+        search_sec.innerText = interval_value+"초마다 조회 중";
+      }
+      ws.send(JSON.stringify(buildJson()));
+      console.log("sendMessage");
     }
 
     function goToPage(page) {
@@ -309,6 +313,7 @@
       if (event.target === modal) closeModal();
     }
 
+    // chdis, amdis 테이블 렌더링
     function renderTablePage(page) {
       logTable.innerHTML = "";
       const start = (page - 1) * rowsPerPage;
@@ -404,41 +409,6 @@
       nextBtn.onclick = () => renderTablePage(currentPage + 1);
       pagination.appendChild(nextBtn);
     }
-// 더미 데이터 생성 후 테스트
-
-    //  function generateDummyData(count) {
-    //    const dummy = [];
-    //    for (let i = 0; i < count; i++) {
-    //      dummy.push({
-    //        id: i + 1,
-    //        PipeFd: Math.floor(Math.random() * 100),
-    //        ThreadCount: Math.floor(Math.random() * 10 + 1),
-    //        RunThreadCount: Math.floor(Math.random() * 10),
-    //        TotalTrCount: Math.floor(Math.random() * 1000),
-    //        ProcessID: Math.floor(Math.random() * 5000),
-    //        RunningCount: Math.floor(Math.random() * 50),
-    //        Status: i % 3 === 0 ? "Running" : "Idle",
-    //        ResetFlag: i % 2,
-    //        RunTime: `${Math.floor(Math.random() * 10)}h ${Math.floor(Math.random() * 60)}m`
-    //      });
-    //    }
-    //    return dummy;
-    //  }
-
-    //  window.onload = () => {
-    //    fullData = generateDummyData(500); // 150개 더미 데이터 생성
-    //    renderTablePage(1); // 첫 페이지 렌더링
-    //    last_time.innerText = new Date().toLocaleString();
-    //    connect.innerHTML = "<p><b>연결 상태 : Dummy Data Mode</b></p>";
-    //  };
-    //  function limitDigits(input) {
-    //     if (input.value.length > 4) {
-    //       input.value = input.value.slice(0, 4);  // 최대 4자리까지만 입력 가능
-    //     }
-    //     if (parseInt(input.value) > 9999) {
-    //       input.value = 9999;  // 값이 너무 크면 9999로 고정
-    //     }
-    //   }
 
     function limitDigits(input) {
       // 최대 4자리까지만 허용
@@ -462,7 +432,7 @@
   }
 
   async function loadTabContent(tabIndex, fileName) {
-    disFlag = tabIndex;
+    disFlag = tabIndex + 1;
     const tabs = document.querySelectorAll('.tab');
     tabs.forEach((tab, i) => {
       tab.classList.toggle('active', i === tabIndex);
@@ -473,33 +443,33 @@
 
     document.getElementById('tabContent').innerHTML = content;
 
-    // ✅ HTML 삽입 후 DOM 요소 재참조
-    logTable = document.getElementById("logTableBody");
-    last_time = document.getElementById("last_time");
+    requestAnimationFrame(() => {
+        logTable = document.getElementById("logTableBody");
+        last_time = document.getElementById("last_time");
 
-    if (fullData.length > 0) {
-      renderTablePage(1);
-    }
-    console.log("loadTab");
+        if (fullData.length > 0) {
+          renderTablePage(1);
+        }
 
-    ws = new WebSocket("ws://211.240.28.240:30145/ms/");
+        console.log("loadTab 이후, 웹소켓 상태 확인 후 toggleRequest 호출");
 
-    ws.onopen = () => {
-      console.log("open");
-      toggleRequest();
-    };
-    ws.onerror = function(error) {
-      console.error("WebSocket Error: ", error);
-    };
-    ws.onclose = () => {
-      connect.innerHTML = "<p><b>연결 상태 : Disconnected</b></p>";
-    };
-    ws.onmessage = (event) => {
-      const payloadArray = parseData(event.data);
-      fullData = payloadArray;
-      if (logTable) renderTablePage(1);
-      if (last_time) last_time.innerText = new Date().toLocaleString();
-    };
+        // ✅ WebSocket이 열렸는지 먼저 체크
+        if (ws.readyState === WebSocket.OPEN) {
+            sendMessage();
+            connectConfig();
+        } else {
+            console.log("WebSocket 연결 안 됨. onopen 때 toggleRequest 예정.");
+            // 소켓 재연결
+            ws = new WebSocket(ws_url);
+            ws.addEventListener('open', function once() {
+                sendMessage();
+                connectConfig();
+                // 다시 호출되지 않게 이 이벤트 리스너를 제거
+                ws.removeEventListener('open', once);
+            });
+            websocketConfig();
+        }
+    });
   }
 
 
