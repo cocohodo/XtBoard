@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebSocket Test</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 1200px;
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 40px;
+      color: #333;
+    }
+
+    .wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 2%;
+    }
+
+    .button-container {
+      flex: 1 1 45%;
+      min-width: 300px;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 20px;
+      margin: 10px 0;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .button-container h2 {
+      margin-bottom: 20px;
+      color: #444;
+    }
+
+    .button-container button {
+      width: 100%;
+      padding: 15px;
+      margin: 10px 0;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      transition: background-color 0.3s ease;
+    }
+
+    .button-container button:hover {
+      background-color: #45a049;
+    }
+
+    @media (max-width: 768px) {
+      .button-container {
+        flex: 1 1 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>WebSocket Test</h1>
+    <div class="wrapper">
+      <div class="button-container">
+        <h2>Platform</h2>
+        <button onclick="goToPage('trtest')">TR Test (RestFul)</button>
+        <button onclick="goToPage('ws_test')">Real Test (Websocket)</button>
+      </div>
+      <div class="button-container">
+        <h2>Monitoring</h2>
+        <button onclick="goToTabPage('ms_test',0)">XtCH Monitoring</button>
+        <button onclick="goToPage('')">Real Test(adv)</button>
+        <button onclick="goToPage('')">Test Button1</button>
+        <button onclick="goToPage('')">Test Button1</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function goToPage(page) {
+      const currentUrl = window.location.href;
+      const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1);
+      window.location.href = baseUrl + page;
+    }
+    function goToTabPage(page, tab) {
+      const currentUrl = window.location.href;
+      const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1);
+      window.location.href = baseUrl + page+"?tab="+tab;
+    }
+  </script>
+</body>
+</html>

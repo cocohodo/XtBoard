@@ -186,9 +186,9 @@
 <body>
 <button onclick="goToPage('')" id="homeBtn">Home</button>
 <div class="tabs">
-  <div class="tab active" onclick="loadTabContent(0, 'XtCH_Monitor_tab1.html')">XtCH</div>
-  <div class="tab" onclick="loadTabContent(1, 'XtAM_Monitor_tab2.html')">XtAM</div>
-  <div class="tab" onclick="loadTabContent(2, 'XtBUS_Monitor_tab3.html')">XtBUS</div>
+  <div class="tab active" onclick="loadTabContent(0, fileName[0])">XtCH</div>
+  <div class="tab" onclick="loadTabContent(1, fileName[1])">XtAM</div>
+  <div class="tab" onclick="loadTabContent(2, fileName[2])">XtBUS</div>
 </div>
 
 <div id="tabContent" class="tab-content">
@@ -196,21 +196,29 @@
 </div>
 
 <script>
+    const fileName = [
+      "XtCH_Monitor_tab1.html",
+      "XtAM_Monitor_tab2.html",
+      "XtBUS_Monitor_tab3.html"
+    ];
+    const ws_url = "ws://211.240.28.240:30245/ms/";
     let fullData = [];
     let logTable = null;  // 데이터 표시 위치
     let last_time = null; // 모니터링 데이터 최종 수신 시간
     let currentPage = 1;  // 현재 페이징 번호(기본값 1 페이지)
-    const rowsPerPage = 20; // 페이징 개수
+    let rowsPerPage = 20; // 페이징 개수
     let connect;          // 현재 연결되어 있는지 표시 위치
     let disFlag = 0;
-    const ws_url = "ws://211.240.28.240:30245/ms/";
     let ws = new WebSocket(ws_url);
     
     // 처음에 접속하면 XtCH 로드
+    // uri에 ?tab=숫자 가 없으면 기본 탭은 0번으로 설정
     window.onload = () => {
-      console.log("onload");
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab') || 0;
+      console.log("onload tab = "+(tab+1));
       websocketConfig();
-      loadTabContent(0, 'XtCH_Monitor_tab1.html');  
+      loadTabContent(tab, fileName[tab]);  
     };
     // 웹소켓 초기화 설정
     function websocketConfig() {
@@ -371,7 +379,7 @@
       pageData.forEach(data => {
         const row = document.createElement("tr");
         const rowData = [
-          data.Description,
+          data.Descript,
           data.QName,
           data.RcvCnt,
           data.DataLen,
