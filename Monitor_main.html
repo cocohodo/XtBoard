@@ -376,7 +376,7 @@
       pageData.forEach(data => {
         const row = document.createElement("tr");
         const rowData = [
-          data.Descript,
+          // data.Descript,
           data.QName,
           data.RcvCnt,
           data.DataLen,
@@ -387,7 +387,7 @@
         ];
         rowData.forEach((val, index) => {
           const cell = document.createElement("td");
-          
+          cell.textContent = val ?? "-";
           row.appendChild(cell);
         });
         logTable.appendChild(row);
@@ -401,10 +401,10 @@
       const end = start + rowsPerPage;
       const pageData = fullData.slice(start, end);
 
-      if(disFlag === 1 || disFlag === 2)
-        tableDataFill(pageData);  // chdis, amdis
-      else if (disFlag === 3)
-        tableDataFill2(pageData); // busdis
+      if(disFlag === 1 || disFlag === 2)  // chdis, amdis
+        tableDataFill(pageData);
+      else if (disFlag === 3) // busdis
+        tableDataFill2(pageData);
 
       currentPage = page;
       createPagination();
