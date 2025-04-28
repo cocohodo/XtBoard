@@ -203,10 +203,18 @@
     const rowsPerPage = 20;
     let lastReceivedTime = null; // 마지막으로 데이터를 받은 시간
     let disFlag = 0;
-    const ws = new WebSocket("ws://211.240.28.240:30145/ms/");
+    let ws = null;
     let liveRequest = false;
     let intervalId = null;
     
+    // function connectWebSocket() {
+    //   ws.onopen = () => {
+    //     console.log("WebSocket 연결 성공");
+    //     // 연결 성공 시 처리할 작업 추가
+    //   };
+    // }
+
+    // connectWebSocket();  // 처음 연결 시도
     
         // 초기 탭 로딩
     // ws.onopen = () => {
@@ -221,9 +229,8 @@
     //   toggleRequest();
     // };
     
-    
     window.onload = () => {
-      // console.log("onload");
+      console.log("onload");
       loadTabContent(0, 'XtCH_Monitor_tab1.html');  
       const connect = document.getElementById("connect");
       if (connect) {
@@ -241,17 +248,6 @@
         console.log('intervalInput 요소를 찾았습니다.');
       }
     });
-	
-    ws.onclose = () => {
-      connect.innerHTML = "<p><b>연결 상태 : Disconnected</b></p>";
-    };
-
-    ws.onmessage = (event) => {
-      const payloadArray = parseData(event.data);
-      fullData = payloadArray;
-      if (logTable) renderTablePage(1);
-      if (last_time) last_time.innerText = new Date().toLocaleString();
-    };
 
 
     function parseData(raw) {
@@ -271,7 +267,7 @@
           dis_type : disFlag+1
          };
         ws.send(JSON.stringify(json));
-      // console.log("snedMessage");
+      console.log("snedMessage");
     }
     function sleep(ms) {
       return new Promise(resolve => setTimeout(resolve, ms));
@@ -281,7 +277,7 @@
       const start_button = document.getElementById("start_button");
       const search_sec = document.getElementById("search_sec");
       const intervalInput = document.getElementById("intervalInput");
-      // console.log("toggle");
+      console.log("toggle");
       // intervalInput 요소가 존재하는지 확인
       if (!intervalInput) {
           console.error("intervalInput 요소를 찾을 수 없습니다.");
@@ -290,34 +286,6 @@
       sendMessage(); // 데이터 전송 함수 호출
       liveRequest = !liveRequest; // 요청 상태 토글
     }
-
-    // function toggleRequest() {
-    //   const start_button = document.getElementById("start_button");
-    //   const search_sec = document.getElementById("search_sec");
-    //   const msg = document.getElementById("intervalInput").value;
-
-    //   const intervalInput = document.getElementById("intervalInput");
-    //   if (intervalInput) {
-    //     const msg = intervalInput.value;
-    //     // 추가 로직
-    //   } else {
-    //     console.error("intervalInput 요소를 찾을 수 없습니다.");
-    //   }
-      
-    //   if (msg === "0") {
-    //     // start_button.innerText = "Send";
-    //     // sendMessage(false);
-    //     search_sec.innerText = "현재 조회 중지 상태"
-    //     // clearInterval(intervalId);
-    //     // intervalId = null;
-    //   } else {
-    //     search_sec.innerText = msg + "초마다 조회 중"
-    //     // start_button.innerText = "Stop";
-    //     // intervalId = setInterval(sendMessage, 5000);
-    //   }
-    //   sendMessage();
-    //   liveRequest = !liveRequest;
-    // }
 
     function goToPage(page) {
       const baseUrl = "/";
@@ -512,17 +480,25 @@
     if (fullData.length > 0) {
       renderTablePage(1);
     }
-    // console.log("loadTab");
+    console.log("loadTab");
+
+    ws = new WebSocket("ws://211.240.28.240:30145/ms/");
 
     ws.onopen = () => {
-      // const connect = document.getElementById("connect");
-      // if (connect) {
-      //   connect.innerHTML = "<p><b>연결 상태 : Connected</b></p>";
-      // } else {
-      //   console.warn("connect 요소를 찾을 수 없습니다.");
-      // }
-      // console.log("open");
+      console.log("open");
       toggleRequest();
+    };
+    ws.onerror = function(error) {
+      console.error("WebSocket Error: ", error);
+    };
+    ws.onclose = () => {
+      connect.innerHTML = "<p><b>연결 상태 : Disconnected</b></p>";
+    };
+    ws.onmessage = (event) => {
+      const payloadArray = parseData(event.data);
+      fullData = payloadArray;
+      if (logTable) renderTablePage(1);
+      if (last_time) last_time.innerText = new Date().toLocaleString();
     };
   }
 
