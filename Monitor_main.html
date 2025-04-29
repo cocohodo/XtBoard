@@ -21,6 +21,9 @@
       display: flex;
       flex-wrap: wrap;
     }
+    .tabs :hover {
+      background-color: #d9f3ff;
+    }
 
     .tab {
       padding: 10px 20px;
@@ -104,6 +107,12 @@
       padding: 4px;
       text-align: center;
       word-wrap: break-word;
+    }
+
+    table tr:hover td {
+      background-color: #e5ffd4;
+      border-top: #333 2px solid;
+      border-bottom: #333 2px solid;
     }
 
     th {
@@ -201,7 +210,6 @@
   <div class="tab" onclick="loadTabContent(2, fileName[2])">XtBUS</div>
   <div class="tab" onclick="loadTabContent(3, fileName[3])">XtTR</div>
   <div class="tab" onclick="loadTabContent(4, fileName[4])">XtPUSH</div>
-  <div class="tab" onclick="loadTabContent(5, fileName[5])">XtCRON</div>
 </div>
 
 <div id="tabContent" class="tab-content">
@@ -215,7 +223,6 @@
       "XtBUS_Monitor_tab3.html",
       "Tr_Monitor_tab4.html",
       "Push_Monitor_tab5.html",
-      "XtCRON_Monitor_tab6.html"
     ];
     const statusTextMap = {
               1: "ACCEPT",
@@ -236,7 +243,7 @@
     let logTable = null;  // 데이터 표시 위치
     let last_time = null; // 모니터링 데이터 최종 수신 시간
     let currentPage = 1;  // 현재 페이징 번호(기본값 1 페이지)
-    let rowsPerPage = 20; // 페이징 개수
+    let rowsPerPage = 10; // 페이징 개수
     let connect;          // 현재 연결되어 있는지 표시 위치
     let disFlag = 0;
     let ws = new WebSocket(ws_url);
@@ -245,8 +252,8 @@
     // uri에 ?tab=숫자 가 없으면 기본 탭은 0번으로 설정
     window.onload = () => {
       const params = new URLSearchParams(window.location.search);
-      const tab = params.get('tab') || 0;
-      console.log("onload tab = "+(tab+1));
+      const tab = parseInt(params.get('tab')) || 0;
+      console.log("onload tab = "+(tab));
       websocketConfig();
       loadTabContent(tab, fileName[tab]);  
     };
