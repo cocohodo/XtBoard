@@ -18,6 +18,8 @@
       margin-top: 20px;
       display: flex;
       border-bottom: 2px solid #ccc;
+      display: flex;
+      flex-wrap: wrap;
     }
 
     .tab {
@@ -121,7 +123,6 @@
       overflow-y: auto;
       display: flex;
       justify-content: center;
-      max-height: 550px;
     }
 
     input, button {
@@ -181,6 +182,15 @@
     .status-prepare{ background-color: #f8b4cf; color: #c41d7f; font-weight: bold; }
     .status-full   { background-color: #fab4ae; color: #cf1322; font-weight: bold; }
     .status-down   { background-color: #d8d8d8; color: #8c8c8c; font-weight: bold; }
+
+    #start_button {
+      font-size: 14px;
+    }
+
+    .last_time_container {
+      margin-top: 10px;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
@@ -189,6 +199,9 @@
   <div class="tab active" onclick="loadTabContent(0, fileName[0])">XtCH</div>
   <div class="tab" onclick="loadTabContent(1, fileName[1])">XtAM</div>
   <div class="tab" onclick="loadTabContent(2, fileName[2])">XtBUS</div>
+  <div class="tab" onclick="loadTabContent(3, fileName[3])">XtTR</div>
+  <div class="tab" onclick="loadTabContent(4, fileName[4])">XtPUSH</div>
+  <div class="tab" onclick="loadTabContent(5, fileName[5])">XtCRON</div>
 </div>
 
 <div id="tabContent" class="tab-content">
@@ -199,8 +212,25 @@
     const fileName = [
       "XtCH_Monitor_tab1.html",
       "XtAM_Monitor_tab2.html",
-      "XtBUS_Monitor_tab3.html"
+      "XtBUS_Monitor_tab3.html",
+      "Tr_Monitor_tab4.html",
+      "Push_Monitor_tab5.html",
+      "XtCRON_Monitor_tab6.html"
     ];
+    const statusTextMap = {
+              1: "ACCEPT",
+              2: "WAIT",
+              3: "PREPARE",
+              4: "FULL",
+              5: "DOWN"
+            };
+    const statusClassMap = {
+      1: "status-accept",
+      2: "status-wait",
+      3: "status-prepare",
+      4: "status-full",
+      5: "status-down"
+    };
     const ws_url = "ws://211.240.28.240:30245/ms/";
     let fullData = [];
     let logTable = null;  // 데이터 표시 위치
@@ -342,22 +372,6 @@
           const cell = document.createElement("td");
           // Status 컬럼이면 변환
           if (index === 7) {
-            const statusTextMap = {
-              1: "ACCEPT",
-              2: "WAIT",
-              3: "PREPARE",
-              4: "FULL",
-              5: "DOWN"
-            };
-
-            const statusClassMap = {
-              1: "status-accept",
-              2: "status-wait",
-              3: "status-prepare",
-              4: "status-full",
-              5: "status-down"
-            };
-
             const statusText = statusTextMap[val] ?? "UNKNOWN";
             const statusClass = statusClassMap[val];
 
@@ -378,7 +392,7 @@
     function tableDataFill2(pageData) {
       pageData.forEach(data => {
         const row = document.createElement("tr");
-        const rowData = [
+        const XtBUS = [
           data.Descript,
           data.QName,
           data.RcvCnt,
@@ -388,7 +402,30 @@
           data.BlockSize,
           data.CliPos
         ];
-        rowData.forEach((val) => {
+        XtBUS.forEach((val) => {
+          const cell = document.createElement("td");
+          cell.textContent = val ?? "-";  // null or undefined면 "-" 출력
+          row.appendChild(cell);
+        });
+        logTable.appendChild(row);
+      });
+    }
+
+    // trdis 테이블 데이터 추가
+    function tableDataFill3(pageData) {
+      pageData.forEach(data => {
+        const row = document.createElement("tr");
+        const XtBUS = [
+          data.TrCode,
+          data.Host,
+          data.BackupHost,
+          data.Port,
+          data.Comp,
+          data.Encryp,
+          data.count,
+          data.Desc
+        ];
+        XtBUS.forEach((val) => {
           const cell = document.createElement("td");
           cell.textContent = val ?? "-";  // null or undefined면 "-" 출력
           row.appendChild(cell);
@@ -408,6 +445,9 @@
         tableDataFill(pageData);
       else if (disFlag === 3) // busdis
         tableDataFill2(pageData);
+      else if (disFlag === 4) // trdis
+        tableDataFill3(pageData);
+
 
       currentPage = page;
       createPagination();

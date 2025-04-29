@@ -30,7 +30,7 @@
         font-size: 12px;
       ">sec</span>
     </div>
-    <select class = "PfName_list" id="PfName_index" onchange="sendMessage()">
+    <select class = "PfName_list" id="PfName_index" onchange="sendMessage()" style="margin-left: 5px; font-size: 14px; padding: 3.2px;">
       <option value="XPM01000" selected>XPM01000</option>
       <option value="XPM10000">XPM10000</option>
       <option value="XPM11000">XPM11000</option>
@@ -52,7 +52,7 @@
     <span id="search_sec">5초마다 조회 중</span>
     </div>
     <!-- <button id="start_button" onclick="toggleRequest()">Start</button> -->
-    <div>
+    <div class="last_time_container">
       <span>최종 수신 시간: </span>
       <span id="last_time"></span>
     </div>
