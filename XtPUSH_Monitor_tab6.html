@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>XtPUSH Monitor</title>
+</head>
+<body>
+  <h2>XtPUSH Monitor</h2>
+  <div style="display: inline-flex; align-items: center;">
+    <label for="intervalInput">요청 간격 : </label>
+
+    <div style="position: relative; display: inline-block;">
+      <input
+      type="number"
+      id="intervalInput"
+      value="5"
+      min="0"
+      max="9999"
+      step="1"
+      oninput="limitDigits(this)"
+      style="text-align: right; padding-right: 30px; width: 45px; margin-left: 6px;"
+      >
+      <span style="
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+        color: #555;
+        font-size: 12px;
+      ">sec</span>
+    </div>
+
+    <button id="start_button" onclick="sendMessage()">Send</button>
+    <span id="search_sec">5초마다 조회 중</span>
+    </div>
+    <!-- <button id="start_button" onclick="toggleRequest()">Start</button> -->
+    <div class="last_time_container">
+      <span>최종 수신 시간: </span>
+      <span id="last_time"></span>
+    </div>
+    <div id="connect"></div>
+
+    <button onclick="openModal()">사용설명</button>
+    <span class="useInfo">*사용 전 확인</span>
+
+    <div id="log_container">
+      <div id="tableContainer">
+        <table>
+          <thead>
+            <tr>
+              <th>큐 이름</th>
+              <th>큐 ID</th>
+              <th>Rcv-Cnt</th>
+              <th>size</th>
+              <th>num</th>
+              <th>pos</th>
+              <th>Block</th>
+              <th>cli</th>
+            </tr>
+          </thead>
+          <tbody id="logTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="pagination" style="text-align: center; margin-top: 10px;"></div>
+
+    <!-- 모달 팝업 -->
+    <div id="helpModal" class="modal" >
+      <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h3>📘 사용설명</h3>
+        <ul>
+          <li><b>초기 동작:</b> 페이지 열면 자동으로 조회가 시작됩니다. (5초 간격)</li>
+          <br>
+          <li><b>send:</b> 데이터 수신을 시작하거나 멈출 수 있습니다.</li>
+          <b>		- 1 ~ 9999(단위 : 초) :</b> 해당 숫자(단위 : 초) 마다 데이터 수신합니다.
+          <br>
+          <b>		- 0 (단위 : 초) :</b> 데이터 수신을 멈춥니다.
+          <br>
+          <br>
+          <li><b>최종 수신 시간:</b> 마지막으로 서버에서 데이터를 받은 시간입니다.</li>
+          <br>
+          <li><b>연결 상태:</b> 웹소켓 연결 상태를 보여줍니다 (Connected/Disconnected)</li>
+        </ul>
+      </div>
+  </div>
+</body>
+</html>

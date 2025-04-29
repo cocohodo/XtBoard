@@ -2,10 +2,10 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>XtBUS Monitor</title>
+  <title>XtM Monitor</title>
 </head>
 <body>
-  <h2>XtBUS Monitor</h2>
+  <h2>XtM Monitor</h2>
   <div style="display: inline-flex; align-items: center;">
     <label for="intervalInput">요청 간격 : </label>
 
@@ -30,6 +30,23 @@
         font-size: 12px;
       ">sec</span>
     </div>
+    <select class = "PfName_list" id="PfName_index" onchange="sendMessage()" style="margin-left: 5px; font-size: 14px; padding: 3.2px;">
+      <option value="XPM01000" selected>XPM01000</option>
+      <option value="XPM10000">XPM10000</option>
+      <option value="XPM11000">XPM11000</option>
+      <option value="XPM12000">XPM12000</option>
+      <option value="XPM20000">XPM20000</option>
+      <option value="XPM21000">XPM21000</option>
+      <option value="XPM22000">XPM22000</option>
+      <option value="XPM30000">XPM30000</option>
+      <option value="XPM32000">XPM32000</option>
+      <option value="XPM50000">XPM50000</option>
+      <option value="XPM51000">XPM51000</option>
+      <option value="XPM52000">XPM52000</option>
+      <option value="XPM55000">XPM55000</option>
+      <option value="XPM61000">XPM61000</option>
+      <option value="XPM93000">XPM93000</option>
+    </select>
 
     <button id="start_button" onclick="sendMessage()">Send</button>
     <span id="search_sec">5초마다 조회 중</span>
@@ -49,14 +66,16 @@
         <table>
           <thead>
             <tr>
-              <th>큐 이름</th>
-              <th>큐 ID</th>
-              <th>Rcv-Cnt</th>
-              <th>size</th>
-              <th>num</th>
-              <th>pos</th>
-              <th>Block</th>
-              <th>cli</th>
+              <th>인덱스</th>
+              <th>Accept-FD</th>
+              <th>총 스레드 개수</th>
+              <th>사용 스레드 개수</th>
+              <th>Tr count</th>
+              <th>프로세스 ID</th>
+              <th>Runing count</th>
+              <th>상태</th>
+              <th>ResetFlag</th>
+              <th>런타임</th>
             </tr>
           </thead>
           <tbody id="logTableBody"></tbody>
