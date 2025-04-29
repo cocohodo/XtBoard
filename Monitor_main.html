@@ -18,6 +18,11 @@
       margin-top: 20px;
       display: flex;
       border-bottom: 2px solid #ccc;
+      display: flex;
+      flex-wrap: wrap;
+    }
+    .tabs :hover {
+      background-color: #d9f3ff;
     }
 
     .tab {
@@ -104,6 +109,12 @@
       word-wrap: break-word;
     }
 
+    table tr:hover td {
+      background-color: #e5ffd4;
+      border-top: #333 2px solid;
+      border-bottom: #333 2px solid;
+    }
+
     th {
       background-color: #333;
       color: white;
@@ -121,7 +132,6 @@
       overflow-y: auto;
       display: flex;
       justify-content: center;
-      max-height: 550px;
     }
 
     input, button {
@@ -181,6 +191,15 @@
     .status-prepare{ background-color: #f8b4cf; color: #c41d7f; font-weight: bold; }
     .status-full   { background-color: #fab4ae; color: #cf1322; font-weight: bold; }
     .status-down   { background-color: #d8d8d8; color: #8c8c8c; font-weight: bold; }
+
+    #start_button {
+      font-size: 14px;
+    }
+
+    .last_time_container {
+      margin-top: 10px;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
@@ -189,6 +208,8 @@
   <div class="tab active" onclick="loadTabContent(0, fileName[0])">XtCH</div>
   <div class="tab" onclick="loadTabContent(1, fileName[1])">XtAM</div>
   <div class="tab" onclick="loadTabContent(2, fileName[2])">XtBUS</div>
+  <div class="tab" onclick="loadTabContent(3, fileName[3])">XtTR</div>
+  <div class="tab" onclick="loadTabContent(4, fileName[4])">XtPUSH</div>
 </div>
 
 <div id="tabContent" class="tab-content">
@@ -199,14 +220,30 @@
     const fileName = [
       "XtCH_Monitor_tab1.html",
       "XtAM_Monitor_tab2.html",
-      "XtBUS_Monitor_tab3.html"
+      "XtBUS_Monitor_tab3.html",
+      "Tr_Monitor_tab4.html",
+      "Push_Monitor_tab5.html",
     ];
+    const statusTextMap = {
+              1: "ACCEPT",
+              2: "WAIT",
+              3: "PREPARE",
+              4: "FULL",
+              5: "DOWN"
+            };
+    const statusClassMap = {
+      1: "status-accept",
+      2: "status-wait",
+      3: "status-prepare",
+      4: "status-full",
+      5: "status-down"
+    };
     const ws_url = "ws://211.240.28.240:30245/ms/";
     let fullData = [];
     let logTable = null;  // 데이터 표시 위치
     let last_time = null; // 모니터링 데이터 최종 수신 시간
     let currentPage = 1;  // 현재 페이징 번호(기본값 1 페이지)
-    let rowsPerPage = 20; // 페이징 개수
+    let rowsPerPage = 10; // 페이징 개수
     let connect;          // 현재 연결되어 있는지 표시 위치
     let disFlag = 0;
     let ws = new WebSocket(ws_url);
@@ -215,8 +252,8 @@
     // uri에 ?tab=숫자 가 없으면 기본 탭은 0번으로 설정
     window.onload = () => {
       const params = new URLSearchParams(window.location.search);
-      const tab = params.get('tab') || 0;
-      console.log("onload tab = "+(tab+1));
+      const tab = parseInt(params.get('tab')) || 0;
+      console.log("onload tab = "+(tab));
       websocketConfig();
       loadTabContent(tab, fileName[tab]);  
     };
@@ -342,22 +379,6 @@
           const cell = document.createElement("td");
           // Status 컬럼이면 변환
           if (index === 7) {
-            const statusTextMap = {
-              1: "ACCEPT",
-              2: "WAIT",
-              3: "PREPARE",
-              4: "FULL",
-              5: "DOWN"
-            };
-
-            const statusClassMap = {
-              1: "status-accept",
-              2: "status-wait",
-              3: "status-prepare",
-              4: "status-full",
-              5: "status-down"
-            };
-
             const statusText = statusTextMap[val] ?? "UNKNOWN";
             const statusClass = statusClassMap[val];
 
@@ -378,7 +399,7 @@
     function tableDataFill2(pageData) {
       pageData.forEach(data => {
         const row = document.createElement("tr");
-        const rowData = [
+        const XtBUS = [
           data.Descript,
           data.QName,
           data.RcvCnt,
@@ -388,7 +409,30 @@
           data.BlockSize,
           data.CliPos
         ];
-        rowData.forEach((val) => {
+        XtBUS.forEach((val) => {
+          const cell = document.createElement("td");
+          cell.textContent = val ?? "-";  // null or undefined면 "-" 출력
+          row.appendChild(cell);
+        });
+        logTable.appendChild(row);
+      });
+    }
+
+    // trdis 테이블 데이터 추가
+    function tableDataFill3(pageData) {
+      pageData.forEach(data => {
+        const row = document.createElement("tr");
+        const XtBUS = [
+          data.TrCode,
+          data.Host,
+          data.BackupHost,
+          data.Port,
+          data.Comp,
+          data.Encryp,
+          data.count,
+          data.Desc
+        ];
+        XtBUS.forEach((val) => {
           const cell = document.createElement("td");
           cell.textContent = val ?? "-";  // null or undefined면 "-" 출력
           row.appendChild(cell);
@@ -408,6 +452,9 @@
         tableDataFill(pageData);
       else if (disFlag === 3) // busdis
         tableDataFill2(pageData);
+      else if (disFlag === 4) // trdis
+        tableDataFill3(pageData);
+
 
       currentPage = page;
       createPagination();
