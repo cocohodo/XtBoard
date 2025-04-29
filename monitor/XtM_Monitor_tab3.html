@@ -2,10 +2,10 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>XtTR Monitor</title>
+  <title>XtM Monitor</title>
 </head>
 <body>
-  <h2>XtTR Monitor</h2>
+  <h2>XtM Monitor</h2>
   <div style="display: inline-flex; align-items: center;">
     <label for="intervalInput">요청 간격 : </label>
 
@@ -34,6 +34,10 @@
     <button id="start_button" onclick="sendMessage()">Send</button>
     <span id="search_sec">5초마다 조회 중</span>
     </div>
+    <div class="home_path_container">
+      <label class="home_path_label">홈 경로</label>
+      <input type="text" id="home_path_input" placeholder="home path">
+    </div>
     <!-- <button id="start_button" onclick="toggleRequest()">Start</button> -->
     <div class="last_time_container">
       <span>최종 수신 시간: </span>
@@ -49,14 +53,17 @@
         <table>
           <thead>
             <tr>
-              <th>큐 이름</th>
-              <th>큐 ID</th>
-              <th>Rcv-Cnt</th>
-              <th>size</th>
-              <th>num</th>
-              <th>pos</th>
-              <th>Block</th>
-              <th>cli</th>
+              <th>이름</th>
+              <th>type</th>
+              <th>k-len</th>
+              <th>r-len</th>
+              <th>b-cnt</th>
+              <th>rcv-cnt</th>
+              <th>bf-trig</th>
+              <th>trt(rcv)</th>
+              <th>af-trg</th>
+              <th>trt(rcv)</th>
+              <th>group</th>
             </tr>
           </thead>
           <tbody id="logTableBody"></tbody>

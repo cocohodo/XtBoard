@@ -259,6 +259,7 @@
       websocketConfig();
       loadTabContent(tab, fileName[tab]);  
     };
+
     // 웹소켓 초기화 설정
     function websocketConfig() {
       ws.onopen = () => {
@@ -282,6 +283,7 @@
         if (last_time) last_time.innerText = new Date().toLocaleString();
       };
     }
+
     // 연결되었는지 표시
     function connectConfig (connection) {
       if (connection) {
@@ -362,7 +364,7 @@
     }
 
     // chdis, amdis 테이블 데이터 추가
-    function tableDataFill(pageData) {
+    function processDataFill(pageData) {
       pageData.forEach(data => {
         const row = document.createElement("tr");
         const rowData = [
@@ -397,8 +399,34 @@
       });
     }
 
+    // mdis 테이블 데이터 추가
+    function mdisDataFill(pageData) {
+      pageData.forEach(data => {
+        const row = document.createElement("tr");
+        const XtBUS = [
+          data.Descript,
+          data.Name,
+          data.KeyLen,
+          data.RecLen,
+          data.BuffCnt,
+          data.RcvCnt,
+          data.BReadCnt,
+          data.BInputCnt,
+          data.AReadCnt,
+          data.AInputCnt,
+          data.Group
+        ];
+        XtBUS.forEach((val) => {
+          const cell = document.createElement("td");
+          cell.textContent = val ?? "-";  // null or undefined면 "-" 출력
+          row.appendChild(cell);
+        });
+        logTable.appendChild(row);
+      });
+    }
+
     // busdis 테이블 데이터 추가
-    function tableDataFill2(pageData) {
+    function busdisDataFill(pageData) {
       pageData.forEach(data => {
         const row = document.createElement("tr");
         const XtBUS = [
@@ -421,7 +449,30 @@
     }
 
     // trdis 테이블 데이터 추가
-    function tableDataFill3(pageData) {
+    function trdisDataFill(pageData) {
+      pageData.forEach(data => {
+        const row = document.createElement("tr");
+        const XtBUS = [
+          data.TrCode,
+          data.Host,
+          data.BackupHost,
+          data.Port,
+          data.Comp,
+          data.Encryp,
+          data.count,
+          data.Desc
+        ];
+        XtBUS.forEach((val) => {
+          const cell = document.createElement("td");
+          cell.textContent = val ?? "-";  // null or undefined면 "-" 출력
+          row.appendChild(cell);
+        });
+        logTable.appendChild(row);
+      });
+    }
+
+    // pushdis 테이블 데이터 추가
+    function pushdisDataFill(pageData) {
       pageData.forEach(data => {
         const row = document.createElement("tr");
         const XtBUS = [
@@ -451,11 +502,16 @@
       const pageData = fullData.slice(start, end);
 
       if(disFlag === 1 || disFlag === 2)  // chdis, amdis
-        tableDataFill(pageData);
+        processDataFill(pageData);
+      else if (disFlag === 3) // mdis
+        mdisDataFill(pageData);
       else if (disFlag === 4) // busdis
-        tableDataFill2(pageData);
+        busdisDataFill(pageData);
       else if (disFlag === 5) // trdis
-        tableDataFill3(pageData);
+        trdisDataFill(pageData);
+      else if (disFlag === 6) // pushdis
+        pushdisDataFill(pageData);
+      else logTable.innerText = "disFlag로 테이블 로드 에러";
 
 
       currentPage = page;
