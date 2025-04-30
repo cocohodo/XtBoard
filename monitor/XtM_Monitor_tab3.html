@@ -35,15 +35,21 @@
     <span id="search_sec">5초마다 조회 중</span>
     </div>
     <div class="home_path_container">
-      <label class="home_path_label">홈 경로</label>
-      <input type="text" id="home_path_input" placeholder="home path">
+      <label class="home_path_label">홈 경로 :</label>
+      <input type="text" class="home_path_input" id="home_path_input" placeholder="home path">
     </div>
     <!-- <button id="start_button" onclick="toggleRequest()">Start</button> -->
-    <div class="last_time_container">
-      <span>최종 수신 시간: </span>
-      <span id="last_time"></span>
+    <div class = "connect_container">
+      <div id="connect"></div>
+      <div class="last_time_container">
+        <span>최종 수신 시간: </span>
+        <span id="last_time"></span>
+      </div>
     </div>
-    <div id="connect"></div>
+    <div class="paging_container">
+      <label>한 페이지 개수: </label>
+      <input type="number" id="paging_input" value="10" min="1" max="99" oninput="changeRowsPerPage(this.value)">
+    </div>
 
     <button onclick="openModal()">사용설명</button>
     <span class="useInfo">*사용 전 확인</span>

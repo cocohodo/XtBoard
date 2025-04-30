@@ -96,7 +96,7 @@
     }
 
     table {
-      width: 80%;
+      width: 100%;
       margin: 20px auto;
       border-collapse: collapse;
       table-layout: fixed;
@@ -113,6 +113,14 @@
       background-color: #e5ffd4;
       border-top: #333 2px solid;
       border-bottom: #333 2px solid;
+    }
+
+    table tr:hover td:hover {
+      background-color: #d5ff3b;
+      border-left: #333 2px solid;
+      border-right: #333 2px solid;
+      font-size: 16px;
+      font-weight: bold;
     }
 
     th {
@@ -196,9 +204,28 @@
       font-size: 14px;
     }
 
-    .last_time_container {
+    .home_path_container {
+      display: flex;
       margin-top: 10px;
+      max-width: 50%;
+    }
+
+    .home_path_label {
+      min-width: 50px;
+    }
+
+    .home_path_input {
+      width: 100%;
+    }
+
+    .connect_container {
+      display: flex;
       font-size: 14px;
+      align-items: center;
+    }
+    .connect_container div {
+      margin-right: 5px;
+      margin-left: 5px;
     }
   </style>
 </head>
@@ -218,14 +245,6 @@
 </div>
 
 <script>
-    const fileName = [
-      "XtCH_Monitor_tab1.html",
-      "XtAM_Monitor_tab2.html",
-      "XtM_Monitor_tab3.html",
-      "XtBUS_Monitor_tab4.html",
-      "XtTR_Monitor_tab5.html",
-      "XtPUSH_Monitor_tab6.html",
-    ];
     const statusTextMap = {
               1: "ACCEPT",
               2: "WAIT",
@@ -240,7 +259,26 @@
       4: "status-full",
       5: "status-down"
     };
-    const ws_url = "ws://211.240.28.240:30245/ms/";
+    const is_test = true; // 테스트 서버면 true로
+    const ws_url = is_test ? "ws://211.240.28.240:30245/ms/" : "ws://211.240.28.240:30445/ms/";
+    const fileName = is_test ? 
+        [
+          "XtCH_Monitor_tab1.html",
+          "XtAM_Monitor_tab2.html",
+          "XtM_Monitor_tab3.html",
+          "XtBUS_Monitor_tab4.html",
+          "XtTR_Monitor_tab5.html",
+          "XtPUSH_Monitor_tab6.html"
+        ] : 
+        [
+          "monitor/XtCH_Monitor_tab1.html",
+          "monitor/XtAM_Monitor_tab2.html",
+          "monitor/XtM_Monitor_tab3.html",
+          "monitor/XtBUS_Monitor_tab4.html",
+          "monitor/XtTR_Monitor_tab5.html",
+          "monitor/XtPUSH_Monitor_tab6.html"
+        ];
+
     let fullData = [];
     let logTable = null;  // 데이터 표시 위치
     let last_time = null; // 모니터링 데이터 최종 수신 시간
@@ -248,6 +286,7 @@
     let rowsPerPage = 10; // 페이징 개수
     let connect;          // 현재 연결되어 있는지 표시 위치
     let disFlag = 0;
+    let home_path = "";
     let ws = new WebSocket(ws_url);
     
     // 처음에 접속하면 XtCH 로드
@@ -319,6 +358,10 @@
         json.PfName = PfNameSelect.value;
       }
 
+      if (home_path) {
+        json.homePath = home_path;
+      }
+
       if (typeof disFlag !== "undefined") {
         json.dis_type = disFlag;
       }
@@ -337,6 +380,11 @@
       else {
         search_sec.innerText = interval_value+"초마다 조회 중";
       }
+      const homePathInput = document.getElementById("home_path_input");
+      if (homePathInput && homePathInput.value) {
+        home_path = homePathInput.value;
+      }
+      
       ws.send(JSON.stringify(buildJson()));
       console.log("sendMessage");
     }
@@ -365,9 +413,14 @@
 
     // chdis, amdis 테이블 데이터 추가
     function processDataFill(pageData) {
+      let dataInfo = document.getElementById("data_info_container");  // 통계나 추가 데이터 표시 위치
+      dataInfo.innerHTML = "";
+
+      let totalClient = 0;
+      let totalTr = 0;
       pageData.forEach(data => {
         const row = document.createElement("tr");
-        const rowData = [
+        const processData = [
           data.id,
           data.PipeFd,
           data.ThreadCount,
@@ -379,7 +432,7 @@
           data.ResetFlag,
           data.RunTime
         ];
-        rowData.forEach((val, index) => {
+        processData.forEach((val, index) => {
           const cell = document.createElement("td");
           // Status 컬럼이면 변환
           if (index === 7) {
@@ -396,14 +449,18 @@
           row.appendChild(cell);
         });
         logTable.appendChild(row);
+
+        totalClient += data.RunThreadCount;
+        totalTr += data.TotalTrCount;
       });
+      dataInfo.innerText = "Total Client : "+totalClient+ " Tr : "+ totalTr;
     }
 
     // mdis 테이블 데이터 추가
     function mdisDataFill(pageData) {
       pageData.forEach(data => {
         const row = document.createElement("tr");
-        const XtBUS = [
+        const XtM = [
           data.Descript,
           data.Name,
           data.KeyLen,
@@ -416,7 +473,7 @@
           data.AInputCnt,
           data.Group
         ];
-        XtBUS.forEach((val) => {
+        XtM.forEach((val) => {
           const cell = document.createElement("td");
           cell.textContent = val ?? "-";  // null or undefined면 "-" 출력
           row.appendChild(cell);
@@ -452,7 +509,7 @@
     function trdisDataFill(pageData) {
       pageData.forEach(data => {
         const row = document.createElement("tr");
-        const XtBUS = [
+        const XtTR = [
           data.TrCode,
           data.Host,
           data.BackupHost,
@@ -462,7 +519,7 @@
           data.count,
           data.Desc
         ];
-        XtBUS.forEach((val) => {
+        XtTR.forEach((val) => {
           const cell = document.createElement("td");
           cell.textContent = val ?? "-";  // null or undefined면 "-" 출력
           row.appendChild(cell);
@@ -475,17 +532,15 @@
     function pushdisDataFill(pageData) {
       pageData.forEach(data => {
         const row = document.createElement("tr");
-        const XtBUS = [
-          data.TrCode,
-          data.Host,
-          data.BackupHost,
-          data.Port,
-          data.Comp,
-          data.Encryp,
-          data.count,
-          data.Desc
+        const XtPUSH = [
+          data.CreateDate,
+          data.KeyLen,
+          data.DataLen,
+          data.BuffCnt,
+          data.RecCnt,
+          data.RcvCnt
         ];
-        XtBUS.forEach((val) => {
+        XtPUSH.forEach((val) => {
           const cell = document.createElement("td");
           cell.textContent = val ?? "-";  // null or undefined면 "-" 출력
           row.appendChild(cell);
@@ -511,7 +566,7 @@
         trdisDataFill(pageData);
       else if (disFlag === 6) // pushdis
         pushdisDataFill(pageData);
-      else logTable.innerText = "disFlag로 테이블 로드 에러";
+      else logTable.innerText = "테이블 로드 에러";
 
 
       currentPage = page;
@@ -565,6 +620,11 @@
         input.value = 9999;
       }
     }
+
+    function changeRowsPerPage(inputNumber) {
+      rowsPerPage = inputNumber;
+      renderTable(1);
+    }
     
   function showTab(index) {
     const tabs = document.querySelectorAll(".tab");
@@ -586,7 +646,14 @@
     const response = await fetch(fileName);
     const content = await response.text();
 
+    // 탭 비우기
     document.getElementById('tabContent').innerHTML = content;
+    // 홈 경로 불러오기
+    let home_path_input = document.getElementById("home_path_input");
+    if (home_path_input) home_path_input.value = home_path;
+    // 페이징 개수 불러오기
+    let paging_input = document.getElementById("paging_input");
+    if (paging_input) paging_input.value = rowsPerPage;
 
     requestAnimationFrame(() => {
         logTable = document.getElementById("logTableBody");
