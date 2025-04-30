@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>h0002 TR 확장 테스트 클라이언트</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    label, input { display: block; margin: 10px 0; }
+    textarea { width: 100%; height: 300px; margin-top: 20px; font-family: monospace; }
+    button { padding: 8px 16px; }
+  </style>
+</head>
+<body>
+  <h2>h0002 TR 확장 테스트 클라이언트</h2>
+
+  <label>
+    종목코드 (shcode):
+    <input type="text" id="shcode" value="000660" required>
+  </label>
+  <label>
+    요청건수 (count):
+    <input type="number" id="count" value="15" required>
+  </label>
+  <button onclick="sendRequest()">요청 보내기</button>
+
+  <h3>응답 결과:</h3>
+  <textarea id="response" readonly></textarea>
+
+  <script>
+    async function sendRequest() {
+      const shcode = document.getElementById('shcode').value;
+      const count = parseInt(document.getElementById('count').value, 10);
+
+      const payload = {
+        XT_COMM_HEAD: {
+          flag: "E",
+          id: "1",
+          cmd: "E"
+        },
+        XT_TR_HEAD: {
+          flag: "F",
+          trcode: "h0002",
+          media: "H",
+          dhead_type: "A",
+          dhead_hi: "0",
+          dhead_lo: "64",
+          fid_out: "0"
+        },
+        XT_DH_HEAD: {
+          cntudiv: "0",
+          screenno: "1234",
+          cntukey: "202404210001ABCDEF1234"
+        },
+        h0002In1: {
+          shcode: shcode,
+          count: count
+        }
+      };
+
+      try {
+        const response = await fetch("http://211.240.28.240:30245/fcgi", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const text = await response.text(); // 수신된 데이터 그대로 출력
+        document.getElementById('response').value = text;
+      } catch (error) {
+        document.getElementById('response').value = "에러 발생: " + error;
+      }
+    }
+  </script>
+</body>
+</html>

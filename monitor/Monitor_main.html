@@ -119,7 +119,6 @@
       background-color: #d5ff3b;
       border-left: #333 2px solid;
       border-right: #333 2px solid;
-      font-size: 16px;
       font-weight: bold;
     }
 
@@ -224,8 +223,7 @@
       align-items: center;
     }
     .connect_container div {
-      margin-right: 5px;
-      margin-left: 5px;
+      margin-right: 10px;
     }
   </style>
 </head>
@@ -259,7 +257,9 @@
       4: "status-full",
       5: "status-down"
     };
-    const is_test = true; // 테스트 서버면 true로
+
+    // 테스트 설정
+    const is_test = true;
     const ws_url = is_test ? "ws://211.240.28.240:30245/ms/" : "ws://211.240.28.240:30445/ms/";
     const fileName = is_test ? 
         [
@@ -280,6 +280,7 @@
         ];
 
     let fullData = [];
+    let dataInfo = [];
     let logTable = null;  // 데이터 표시 위치
     let last_time = null; // 모니터링 데이터 최종 수신 시간
     let currentPage = 1;  // 현재 페이징 번호(기본값 1 페이지)
@@ -311,8 +312,8 @@
         connect.innerHTML = "<p><b>연결 상태 : Disconnected</b></p>";
       };
       ws.onmessage = (event) => {
-        const payloadArray = parseData(event.data);
-        fullData = payloadArray;
+        fullData = parseInterval(event.data);
+        parseDataInfo(event.data);
         if(!logTable) {
           console.error("데이터 테이블 로딩 Error");
           return;
@@ -334,13 +335,24 @@
     }
 
     // 데이터 받으면 json 파싱해서 배열로 반환
-    function parseData(raw) {
+    function parseInterval(raw) {
       try {
         const obj = JSON.parse(raw);
         return obj.interval || [];
       } catch (e) {
         console.error("Invalid JSON:", raw);
         return [];
+      }
+    }
+    // 추가 데이터가 있으면 json 파싱해서 배열로 저장
+    function parseDataInfo(raw) {
+      try {
+        const jsonDataArray = JSON.parse(raw);
+        if (jsonDataArray.dataInfo) dataInfo = jsonDataArray.dataInfo;
+        //else console.log("dataInfo 없음");
+      } catch (error) {
+        console.error("Json Parsing Error: ",raw);
+        return;
       }
     }
 
@@ -414,7 +426,6 @@
     // chdis, amdis 테이블 데이터 추가
     function processDataFill(pageData) {
       let dataInfo = document.getElementById("data_info_container");  // 통계나 추가 데이터 표시 위치
-      dataInfo.innerHTML = "";
 
       let totalClient = 0;
       let totalTr = 0;
@@ -453,7 +464,10 @@
         totalClient += data.RunThreadCount;
         totalTr += data.TotalTrCount;
       });
-      dataInfo.innerText = "Total Client : "+totalClient+ " Tr : "+ totalTr;
+      if(dataInfo) {
+        dataInfo.innerHTML = "";
+        dataInfo.innerText = "Total Client : "+totalClient+ " Tr : "+ totalTr;
+      }
     }
 
     // mdis 테이블 데이터 추가

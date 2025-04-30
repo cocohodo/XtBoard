@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>실시간 시세 테스트 클라이언트</title>
+  <style>
+    body {
+      font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+      padding: 20px;
+    }
+    input, button {
+      margin: 5px;
+      padding: 5px;
+    }
+    #log {
+      white-space: pre-wrap;
+      background: #000;
+      color: #0f0;
+      padding: 10px;
+      height: 400px;
+      overflow-y: scroll;
+      font-family: Consolas, monospace;
+    }
+  </style>
+</head>
+<body>
+  <h2>실시간 종목 시세 구독</h2>
+
+  <label>trcode: <input type="text" id="trcode" value="RKXS3"></label>
+  <label>key (종목코드): <input type="text" id="key" value="005930"></label>
+  <button onclick="sendAdvise()">📡 실시간 요청 (advise)</button>
+  <button onclick="sendUnadvise()">🛑 실시간 해제 (unadvise)</button>
+
+  <h3>시세 수신 로그</h3>
+  <div id="log"></div>
+
+  <script>
+    const ws = new WebSocket("ws://211.240.28.240:30245/ws/");
+    const log = document.getElementById("log");
+
+    ws.onopen = () => logMessage("[WebSocket 연결됨]");
+    ws.onclose = () => logMessage("[WebSocket 연결 종료]");
+    ws.onerror = err => logMessage("[WebSocket 오류 발생]");
+
+    ws.onmessage = event => {
+      logMessage(event.data);
+    };
+
+    function logMessage(msg) {
+      log.textContent += msg + "\n";
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function sendAdvise() {
+      const tr = document.getElementById("trcode").value.trim();
+      const key = document.getElementById("key").value.trim();
+      if (tr && key) {
+        const msg = JSON.stringify({ action: "advise", trcode: tr, key: key });
+        ws.send(msg);
+        logMessage("[send advise] " + msg);
+      }
+    }
+
+    function sendUnadvise() {
+      const tr = document.getElementById("trcode").value.trim();
+      const key = document.getElementById("key").value.trim();
+      if (tr && key) {
+        const msg = JSON.stringify({ action: "unadvise", trcode: tr, key: key });
+        ws.send(msg);
+        logMessage("[send unadvise] " + msg);
+      }
+    }
+  </script>
+</body>
+</html>
