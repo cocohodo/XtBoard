@@ -199,7 +199,7 @@
     .status-full   { background-color: #fab4ae; color: #cf1322; font-weight: bold; }
     .status-down   { background-color: #d8d8d8; color: #8c8c8c; font-weight: bold; }
 
-    #start_button {
+    #start_button, #stop_button {
       font-size: 14px;
     }
 
@@ -224,6 +224,10 @@
     }
     .connect_container div {
       margin-right: 10px;
+    }
+
+    #search_sec {
+      font-size: 14px;
     }
   </style>
 </head>
@@ -288,6 +292,7 @@
     let connect;          // 현재 연결되어 있는지 표시 위치
     let disFlag = 0;
     let home_path = "";
+    let interval_value = 5;
     let ws = new WebSocket(ws_url);
     
     // 처음에 접속하면 XtCH 로드
@@ -318,9 +323,9 @@
           console.error("데이터 테이블 로딩 Error");
           return;
         }
-        renderTable(1);
+        renderTable(currentPage);
 
-        if (last_time) last_time.innerText = new Date().toLocaleString();
+        if (last_time) last_time.innerText = dataInfo.dataTime;
       };
     }
 
@@ -349,7 +354,7 @@
       try {
         const jsonDataArray = JSON.parse(raw);
         if (jsonDataArray.dataInfo) dataInfo = jsonDataArray.dataInfo;
-        //else console.log("dataInfo 없음");
+        // else console.log("dataInfo 없음");
       } catch (error) {
         console.error("Json Parsing Error: ",raw);
         return;
@@ -384,7 +389,8 @@
     // 서버에 interval, dis_type, PfName 등 변경할 때 요청 보내는 함수
     function sendMessage() {
       // if (sendFlag) {
-      const interval_value = document.getElementById("intervalInput").value;
+      const interval_input = document.getElementById("intervalInput");
+      interval_value = interval_input.value;
       const search_sec = document.getElementById("search_sec");
       if (interval_value === "0") {
         search_sec.innerText = "조회 멈춤";
@@ -399,6 +405,26 @@
       
       ws.send(JSON.stringify(buildJson()));
       console.log("sendMessage");
+    }
+
+    // 서버에서 데이터 받기 멈춤
+    function stopMessage() {
+      const intervalInput = document.getElementById("intervalInput");
+      const search_sec = document.getElementById("search_sec");
+      const stop_button = document.getElementById("stop_button");
+      if (intervalInput.value === "0") {
+        intervalInput.value = interval_value;
+        search_sec.innerText = intervalInput.value+"초마다 조회 중";
+        stop_button.innerText = "Stop";
+      }
+      else {
+        interval_value = intervalInput.value;
+        intervalInput.value = "0";
+        search_sec.innerText = "조회 멈춤";
+        stop_button.innerText = "Start";
+      }
+      ws.send(JSON.stringify(buildJson()));
+      console.log("stopMessage");
     }
 
     function goToPage(page) {
@@ -425,7 +451,7 @@
 
     // chdis, amdis 테이블 데이터 추가
     function processDataFill(pageData) {
-      let dataInfo = document.getElementById("data_info_container");  // 통계나 추가 데이터 표시 위치
+      let dataInfoDisplay = document.getElementById("data_info_container");  // 통계나 추가 데이터 표시 위치
 
       let totalClient = 0;
       let totalTr = 0;
@@ -464,14 +490,15 @@
         totalClient += data.RunThreadCount;
         totalTr += data.TotalTrCount;
       });
-      if(dataInfo) {
-        dataInfo.innerHTML = "";
-        dataInfo.innerText = "Total Client : "+totalClient+ " Tr : "+ totalTr;
+      if(dataInfoDisplay) {
+        dataInfoDisplay.innerHTML = "";
+        dataInfoDisplay.innerText = "Total Client : "+totalClient+ " Tr : "+ totalTr;
       }
     }
 
     // mdis 테이블 데이터 추가
     function mdisDataFill(pageData) {
+      const dataInfoTable = document.getElementById("dataInfoTableBody");
       pageData.forEach(data => {
         const row = document.createElement("tr");
         const XtM = [
@@ -494,10 +521,27 @@
         });
         logTable.appendChild(row);
       });
+      // 추가 정보 출력
+      const XtMDataInfo = [
+        dataInfo.CreateDate,
+        dataInfo.TNum,
+        dataInfo.BSize,
+        dataInfo.FSize,
+        dataInfo.RCnt,
+        dataInfo.key1+"("+dataInfo.key2+"="+dataInfo.KeyCnt+"+"+dataInfo.SlotCnt+")"
+      ];
+      const row = document.createElement("tr");
+      XtMDataInfo.forEach((val) => {
+        const cell = document.createElement("td");
+        cell.textContent = val ?? "-";
+        row.appendChild(cell);
+      })
+      dataInfoTable.appendChild(row);
     }
 
     // busdis 테이블 데이터 추가
     function busdisDataFill(pageData) {
+      const dataInfoTable = document.getElementById("dataInfoTableBody");
       pageData.forEach(data => {
         const row = document.createElement("tr");
         const XtBUS = [
@@ -517,10 +561,26 @@
         });
         logTable.appendChild(row);
       });
+      // 추가 정보 출력
+      const XtBUSDataInfo = [
+        dataInfo.tcnt,
+        dataInfo.tcli,
+        dataInfo.Date,
+        dataInfo.QueueNum,
+        dataInfo.BlockSize
+      ];
+      const row = document.createElement("tr");
+      XtBUSDataInfo.forEach((val) => {
+        const cell = document.createElement("td");
+        cell.textContent = val ?? "-";
+        row.appendChild(cell);
+      })
+      dataInfoTable.appendChild(row);
     }
 
     // trdis 테이블 데이터 추가
     function trdisDataFill(pageData) {
+      const dataInfoTable = document.getElementById("dataInfoTableBody");
       pageData.forEach(data => {
         const row = document.createElement("tr");
         const XtTR = [
@@ -540,6 +600,19 @@
         });
         logTable.appendChild(row);
       });
+      // 추가 정보 출력
+      const XtTRDataInfo = [
+        dataInfo.recordcnt,
+        "0x"+dataInfo.key,
+        dataInfo.timebuf
+      ];
+      const row = document.createElement("tr");
+      XtTRDataInfo.forEach((val) => {
+        const cell = document.createElement("td");
+        cell.textContent = val ?? "-";
+        row.appendChild(cell);
+      })
+      dataInfoTable.appendChild(row);
     }
 
     // pushdis 테이블 데이터 추가
@@ -566,6 +639,8 @@
     // 테이블 렌더링
     function renderTable(page) {
       logTable.innerHTML = "";
+      const dataInfoTable = document.getElementById("dataInfoTableBody");
+      if (dataInfoTable) dataInfoTable.innerHTML = "";
       const start = (page - 1) * rowsPerPage;
       const end = start + rowsPerPage;
       const pageData = fullData.slice(start, end);
@@ -662,10 +737,13 @@
 
     // 탭 비우기
     document.getElementById('tabContent').innerHTML = content;
-    // 홈 경로 불러오기
+    // 홈 경로 유지
     let home_path_input = document.getElementById("home_path_input");
     if (home_path_input) home_path_input.value = home_path;
-    // 페이징 개수 불러오기
+    // 현재 요청 간격 유지
+    let interval_input = document.getElementById("intervalInput");
+    if (interval_input) interval_input.value = interval_value;
+    // 페이징 개수 유지
     let paging_input = document.getElementById("paging_input");
     if (paging_input) paging_input.value = rowsPerPage;
 

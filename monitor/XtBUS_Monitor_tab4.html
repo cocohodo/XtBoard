@@ -31,6 +31,7 @@
       ">sec</span>
     </div>
 
+    <button id="stop_button" onclick="stopMessage()">Stop</button>
     <button id="start_button" onclick="sendMessage()">Send</button>
     <span id="search_sec">5초마다 조회 중</span>
     </div>
@@ -70,6 +71,22 @@
             </tr>
           </thead>
           <tbody id="logTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="data_info_container" class="data_info_container">
+      <div id="tableContainer">
+        <table>
+          <thead>
+            <tr>
+              <th>총 수신 자료 건수</th>
+              <th>접속 Process수</th>
+              <th>Date</th>
+              <th>Queue Num</th>
+              <th>Mem Size</th>
+            </tr>
+          </thead>
+          <tbody id="dataInfoTableBody"></tbody>
         </table>
       </div>
     </div>
