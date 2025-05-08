@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Xt Monitor</title>
+  <style>
+    
+    button {
+        background-color: #e0e0e0;
+        color: #333;
+        border: 1px solid #bbb;
+        border-radius: 4px;
+        padding: 6px 12px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: background-color 0.2s ease, box-shadow 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        margin-right: 6px;
+        margin-left: 6px;
+    }
+    button:hover {
+        ground-color: #d5d5d5;
+    }
+    
+    button:active {
+        background-color: #c0c0c0;
+        box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+    }
+    
+    button:disabled {
+        background-color: #f2f2f2;
+        color: #999;
+        border-color: #ddd;
+        cursor: not-allowed;
+    }
+
+    body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        background-color: #f9f9f9;
+        font-size: 12px;
+    }
+
+    h2 {
+        text-align: center;
+    }
+
+    table {
+        width: 100%;
+        margin: 20px auto;
+        border-collapse: collapse;
+        table-layout: fixed;
+
+        width: 100%;
+        margin: 20px auto;
+        border-collapse: collapse;
+        table-layout: auto; /* 자동 열 너비 설정 */
+    }
+
+    th, td {
+        border: 1px solid #ccc;
+        padding: 4px;
+        text-align: center;
+        word-wrap: break-word;
+
+        border: 1px solid #ccc;
+        padding: 4px;
+        text-align: center;
+        white-space: nowrap; /* 줄바꿈 없이 가로 확장 */
+    }
+
+    table tr:hover td {
+        background-color: #e5ffd4;
+        border-top: #333 2px solid;
+        border-bottom: #333 2px solid;
+    }
+
+    table tr:hover td:hover {
+        background-color: #d5ff3b;
+        border-left: #333 2px solid;
+        border-right: #333 2px solid;
+        font-weight: bold;
+    }
+    th {
+        background-color: #333;
+        color: white;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        font-size: 12px;
+        position: relative;
+    }
+    .resizer {
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: 5px;
+        height: 100%;
+        cursor: col-resize;
+        user-select: none;
+    }
+    input, button {
+        font-size: 12px;
+        padding: 4px 8px;
+    }
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+        opacity: 1;
+        display: inline;
+    }
+    input[type=number] {
+        -moz-appearance: textfield; /* Firefox에서 숫자 스핀 제거 방지 */
+    }
+    
+    #homeBtn{
+        margin: 10px auto;
+    }
+    .input_container{
+        margin-bottom: 10px;
+    }
+    .port_input, .no_input {
+        width: 50px;
+    }
+    tbody tr:nth-child(even) {
+        background-color: #f1f1f1;
+    }
+    #start_button, #stop_button {
+        font-size: 14px;
+    }
+    #search_sec {
+        font-size: 14px;
+    }
+    .connect_container {
+        display: flex;
+        font-size: 14px;
+        align-items: center;
+    }
+    #tableContainer {
+        overflow-y: auto;
+        display: flex;
+        justify-content: center;
+    }
+    .tab-content {
+        /* display: none; */
+        border: 1px solid #ccc;
+        padding: 15px;
+        background-color: #fff;
+        min-height: 750px;
+    }
+
+  </style>
+</head>
+<body>
+    <button onclick="goToPage('')" id="homeBtn">Home</button>
+    <div id="tabContent" class="tab-content">
+        <h2>XtCRON Monitor</h2>
+        <div class="input_container"> 
+            <label class="ip_label">IP</label> :</label>
+            <input type="text" class="ip_input" id="ip_input" placeholder="000.000.000.000">
+            <label class="port_label">Port</label> :</label>
+            <input type="text" class="port_input" id="port_input" placeholder="0000">
+            
+            <input type="radio" id="selectRadio" name="select" value="select">
+            <label for="selectRadio">SELECT : </label>
+
+            <select id="selectBox" name="select" disabled>
+                <option value=1>------</option>
+                <option value=2>kill</option>
+                <option value=3>alive</option>
+                <option value=4>reload</option>
+                <option value=5>quit</option>
+            </select>
+
+            <label class="port_label">No</label> :</label>
+            <input type="num" class="no_input" id="no_input" placeholder="0000" disabled>
+
+        </div>
+    
+        <div style="position: relative; display: inline-block;">
+            <input
+            type="number"
+            id="intervalInput"
+            value="5"
+            min="0"
+            max="9999"
+            step="1"
+            oninput="limitDigits(this)"
+            style="text-align: right; padding-right: 30px; width: 45px; margin-left: 6px;">
+            <span style="
+              position: absolute;
+              right: 8px;
+              top: 50%;
+              transform: translateY(-50%);
+              pointer-events: none;
+              color: #555;
+              font-size: 12px;
+            ">sec</span>
+        </div>
+
+        <button id="stop_button" onclick="stopMessage()">Stop</button>
+        <button id="start_button" onclick="sendMessage()">Send</button>
+        <span id="search_sec">5초마다 조회 중</span>
+    
+        <div class = "connect_container">
+          <div id="connect"></div>
+          <div class="last_time_container">
+            <span>최종 수신 시간: </span>
+            <span id="last_time"></span>
+          </div>
+        </div>
+    
+        <div class="paging_container">
+          <label>한 페이지 개수: </label>
+          <input type="number" id="paging_input" value="10" min="1" max="99" oninput="changeRowsPerPage(this.value)">
+        </div>
+
+    
+        <div id="log_container">
+          <div id="tableContainer">
+            <table>
+              <thead>
+                <tr>
+                  <th>No.</th>
+                  <th>프로세스</th>
+                  <th>월</th>
+                  <th>주</th>
+                  <th>일</th>
+                  <th>시작시간</th>
+                  <th>종료시간</th>
+                  <th>속성</th>
+                  <th>설명</th>
+                  <th>실행일자</th>
+                  <th>실행시간</th>
+                  <th>PID</th>
+                  <th>회수</th>
+                  <th>상태</th>
+                  <th>위치</th>
+                </tr>
+              </thead>
+              <tbody id="logTableBody"></tbody>
+            </table>
+          </div>
+          <div id="dataInfoTableBody" class="dataInfoTableBody"></div>
+        </div>
+        <div id="pagination" style="text-align: center; margin-top: 10px;"></div>
+    </div>
+
+<script>
+    
+    const is_test = true;
+    const ws_url = is_test ? "ws://211.240.28.240:30245/ms/" : "ws://211.240.28.240:30445/ms/";
+    let ws = new WebSocket(ws_url);
+    let ip_input = "";
+    let port_input = "";
+    let select_input = "";
+    let no_input = "";
+    const radio = document.getElementById('selectRadio');
+    const selectBox = document.getElementById('selectBox');
+    let isChecked = false;
+    const logTable = document.getElementById("logTableBody");
+    let fullData = [];
+    let rowsPerPage = 10;
+    let currentPage = 1;
+
+    function goToPage(page) {
+        const baseUrl = "/";
+        window.location.href = baseUrl + page;
+    }
+
+    window.onload = () => {
+        if (ws.readyState === WebSocket.OPEN) {
+            connectConfig(true);
+        } else {
+            connectConfig(false);
+            ws = new WebSocket(ws_url);
+            ws.addEventListener('open', function once() {
+                connectConfig(true);
+                ws.removeEventListener('open', once);
+                });
+            websocketConfig();
+        }
+    };
+
+    function websocketConfig() {
+        ws.onopen = () => {
+            console.log("WebSocket 연결됨");
+        };
+        ws.onerror = function(error) {
+            console.error("WebSocket 오류: ", error);
+        };
+        ws.onclose = () => {
+            document.getElementById("connect").innerHTML = "<p><b>연결 상태 : Disconnected</b></p>";
+        };
+
+        ws.onmessage = (event) => {
+            console.log("onmessage");
+            parseDataInfo(event.data);
+            try {
+                const parsed = JSON.parse(event.data);
+                if (Array.isArray(parsed)) {
+                fullData = parsed;
+                crondisDataFill(currentPage);
+                } else if (Array.isArray(parsed.interval)) {
+                fullData = parsed.interval;
+                crondisDataFill(currentPage);
+                } else {
+                console.warn("Unexpected data format", parsed);
+                }
+            } catch (e) {
+                console.error("Failed to parse WebSocket message", e);
+            }
+            if (last_time) last_time.innerText = dataInfo.dataTime;
+        };
+    }
+
+    function connectConfig(connection) {
+    const conn = document.getElementById("connect");
+    conn.innerHTML = connection
+    ? "<p><b>연결 상태 : Connected</b></p>"
+    : "<p><b>연결 상태 : Disconnected</b></p>";
+    }
+
+
+
+    function crondisDataFill(page) {
+        logTable.innerHTML = "";
+        const start = (page - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        const pageData = fullData.slice(start, end);
+        // console.log("start : " + start + ", end : " + end )
+        pageData.forEach(data => {
+        const row = document.createElement("tr");
+        const rowData = [
+        data.process_pos,
+        data.process_id,
+        data.runmonth,
+        data.runsrtweek == "*" ? "*" : data.runsrtweek + "-" + data.runendweek,
+        data.runday,
+        data.starttime,
+        data.endtime,
+        data.attrib,
+        data.desc,
+        data.run_date,
+        data.run_time,
+        data.pid,
+        data.runcnt,
+        data.laststat,
+        data.path,
+        // data.status,
+        ];
+        rowData.forEach(val => {
+            const cell = document.createElement("td");
+            cell.textContent = val ?? "-";
+            row.appendChild(cell);
+        });
+        row.addEventListener("click", () => {
+            const noInputField = document.getElementById("no_input");
+            const firstCellValue = row.cells[0].textContent;
+            noInputField.value = firstCellValue;
+        });
+        logTable.appendChild(row);
+        });
+
+        currentPage = page;
+        createPagination();
+    }
+
+    function sendMessage() {
+        const interval_input = document.getElementById("intervalInput");
+        const interval_value = interval_input.value;
+        const search_sec = document.getElementById("search_sec");
+        const ipinput = document.getElementById("ip_input");
+        const portinput = document.getElementById("port_input");
+        const noinput = document.getElementById("no_part");
+
+        if (search_sec.innerText = interval_value === "0") {
+            search_sec.innerText = "조회 멈춤"
+            stop_button.innerText = "Start";
+
+        }else {
+            search_sec.innerText = interval_value + "초마다 조회 중";
+            stop_button.innerText = "Stop";
+        }
+
+        ip_input = ipinput?.value || "";
+        port_input = portinput?.value || "";
+        select_input = isChecked ? selectBox.value : 1;
+        if (isChecked) {
+            no_input = noinput;
+        }else {
+            no_input = null;
+        }
+        // no_input = 43
+        // console.log(selectBox.value);
+
+        const jsonData = buildJson();
+        ws.send(JSON.stringify(jsonData));
+        console.log("전송:", jsonData);
+    }
+
+    function buildJson() {
+        return {
+            interval: document.getElementById("intervalInput").value,
+            CronIP: ip_input,
+            CronPort: port_input,
+            CronSelect: select_input,
+            //   SelectCommand: select_input
+            CronTarget: no_input
+        };
+    }
+
+    radio.addEventListener('click', () => {
+        const noInput = document.getElementById("no_input");
+        isChecked = !isChecked;
+        radio.checked = isChecked;
+        selectBox.disabled = !isChecked;
+        noInput.disabled = !isChecked;
+        if (!isChecked) {
+            selectBox.selectedIndex = 0;
+        }
+    });
+
+    function createPagination() {
+        const pagination = document.getElementById("pagination");
+        pagination.innerHTML = "";
+        const totalPages = Math.ceil(fullData.length / rowsPerPage);
+        const maxButtons = 5;
+        if(totalPages === 1){
+        return;
+        }
+
+        const prevBtn = document.createElement("button");
+        prevBtn.textContent = "이전";
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.onclick = () => crondisDataFill(currentPage - 1);
+        pagination.appendChild(prevBtn);
+
+        let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+        let endPage = startPage + maxButtons - 1;
+        if (endPage > totalPages) {
+        endPage = totalPages;
+        startPage = Math.max(1, endPage - maxButtons + 1);
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+        const btn = document.createElement("button");
+        btn.textContent = i;
+        btn.disabled = i === currentPage;
+        btn.onclick = () => crondisDataFill(i);
+        pagination.appendChild(btn);
+        }
+
+        const nextBtn = document.createElement("button");
+        nextBtn.textContent = "다음";
+        nextBtn.disabled = currentPage === totalPages;
+        nextBtn.onclick = () => crondisDataFill(currentPage + 1);
+        pagination.appendChild(nextBtn);
+    }
+
+    function changeRowsPerPage(inputNumber) {
+      rowsPerPage = parseInt(inputNumber);
+      crondisDataFill(1);
+    }
+
+    function makeTableResizable(table) {
+    const cols = table.querySelectorAll("th");
+
+        cols.forEach(th => {
+            const resizer = document.createElement("div");
+            resizer.classList.add("resizer");
+
+            th.appendChild(resizer);
+            resizer.addEventListener("mousedown", initResize);
+
+            let startX, startWidth;
+
+            function initResize(e) {
+            startX = e.clientX;
+            startWidth = th.offsetWidth;
+            document.addEventListener("mousemove", resizeColumn);
+            document.addEventListener("mouseup", stopResize);
+            }
+
+            function resizeColumn(e) {
+            const newWidth = startWidth + (e.clientX - startX);
+            th.style.width = newWidth + "px";
+            }
+
+            function stopResize() {
+            document.removeEventListener("mousemove", resizeColumn);
+            document.removeEventListener("mouseup", stopResize);
+            }
+        });
+    }
+
+    window.addEventListener("load", () => {
+        const table = document.querySelector("table");
+        makeTableResizable(table);
+    });
+
+    function limitDigits(input) {
+      // 최대 4자리까지만 허용
+      if (input.value.length > 4) {
+        input.value = input.value.slice(0, 4);
+      }
+      // 최대값 보정
+      if (parseInt(input.value) > 9999) {
+        input.value = 9999;
+      }
+    }
+    
+    function stopMessage() {
+      const intervalInput = document.getElementById("intervalInput");
+      if (intervalInput.value === "0") {
+        intervalInput.value = interval_value;
+        search_sec.innerText = intervalInput.value+"초마다 조회 중";
+        stop_button.innerText = "Stop";
+      }
+      else {
+        interval_value = intervalInput.value;
+        intervalInput.value = "0";
+        search_sec.innerText = "조회 멈춤";
+        stop_button.innerText = "Start";
+      }
+      ws.send(JSON.stringify(buildJson()));
+      console.log("stopMessage");
+    }
+
+    function parseDataInfo(raw) {
+      try {
+        const jsonDataArray = JSON.parse(raw);
+        if (jsonDataArray.dataInfo) dataInfo = jsonDataArray.dataInfo;
+        // else console.log("dataInfo 없음");
+      } catch (error) {
+        console.error("Json Parsing Error: ",raw);
+        return;
+      }
+    }
+</script>
+
+</body>
+</html>
