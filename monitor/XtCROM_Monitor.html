@@ -347,7 +347,6 @@
         let chkatt = "";
         rowData.forEach((val,index) => {
             const cell = document.createElement("td");
-            console.log(index);
             if(index === 7){
                 if(val === "SEPARATOR"){
                     row.style.backgroundColor = "#ffff00"
@@ -401,7 +400,7 @@
 
         ip_input = ipinput?.value || "";
         port_input = portinput?.value || "";
-        select_input = isChecked ? selectBox.value : 1;
+        select_input = isChecked ? parseInt(selectBox.value) : 1;
         if (isChecked) {
             no_input = noinput;
         }else {
