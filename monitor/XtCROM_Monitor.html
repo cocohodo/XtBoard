@@ -19,7 +19,7 @@
         margin-left: 6px;
     }
     button:hover {
-        ground-color: #d5d5d5;
+        background-color: #d5d5d5;
     }
     
     button:active {
@@ -44,7 +44,9 @@
     h2 {
         text-align: center;
     }
-
+    label {
+        margin-left: 10px;
+    }
     table {
         width: 100%;
         margin: 20px auto;
@@ -62,18 +64,24 @@
         /* white-space: nowrap; 줄바꿈 없이 가로 확장 */
     }
 
-    table tr:hover td {
+    /* table tr:hover  {
         background-color: #e5ffd4;
         border-top: #333 2px solid;
         border-bottom: #333 2px solid;
+        border : #333 2px solid;
+    } */
+    tr.selected {
+        /* background-color: #c8e6c9 !important; 원하는 클릭 색상 */
+        /* border: 2px solid #388e3c; */
+        /* background-color: #e5ffd4 !important; */
+        border : #333 2px solid;
     }
-
-    table tr:hover td:hover {
+    /* table tr:hover td:hover {
         background-color: #d5ff3b;
         border-left: #333 2px solid;
         border-right: #333 2px solid;
         font-weight: bold;
-    }
+    } */
     th {
         background-color: #333;
         color: white;
@@ -143,6 +151,31 @@
         background-color: #fff;
         min-height: 750px;
     }
+    #customMenu {
+        position: absolute;
+        display: none;
+        background-color: white;
+        border: 1px solid #ccc;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        width: 120px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        z-index: 1000;
+    }
+
+    #customMenu li {
+        padding: 8px 12px;
+        cursor: pointer;
+    }
+
+    #customMenu li:hover {
+        background-color: #eee;
+    }
+    .input_container input[type="checkbox"] {
+        vertical-align: middle;
+        margin-right: 4px;
+    }
 
   </style>
 </head>
@@ -151,13 +184,14 @@
     <div id="tabContent" class="tab-content">
         <h2>XtCRON Monitor</h2>
         <div class="input_container"> 
-            <label class="ip_label">IP</label> :</label>
+            <label class="ip_label">IP :</label>
             <input type="text" class="ip_input" id="ip_input" placeholder="000.000.000.000">
             <label class="port_label">Port</label> :</label>
             <input type="text" class="port_input" id="port_input" placeholder="0000">
             
-            <input type="radio" id="selectRadio" name="select" value="select">
-            <label for="selectRadio">SELECT : </label>
+            <label> 모니터링 전용 : </label>
+            <input type="checkbox" id="selectcheck" name="select" value="select" checked>
+            <label >SELECT : </label>
 
             <select id="selectBox" name="select" disabled>
                 <option value=1>------</option>
@@ -213,7 +247,7 @@
     
         <div id="log_container">
           <div id="tableContainer">
-            <table>
+            <table class = "cronTable">
               <thead>
                 <tr>
                   <th>No.</th>
@@ -241,6 +275,14 @@
         <div id="pagination" style="text-align: center; margin-top: 10px;"></div>
     </div>
 
+    <!-- <div id="target">우클릭 해보세요</div> -->
+
+    <ul id="customMenu">
+        <li onclick="actionOne()">kill</li>
+        <li onclick="actionTwo()">alive</li>
+        <li onclick="actionThree()">reload</li>
+        <!-- <li onclick="actionFour()">Refresh</li> -->
+    </ul>
 <script>
     
     const is_test = true;
@@ -250,13 +292,20 @@
     let port_input = "";
     let select_input = "";
     let no_input = "";
-    const radio = document.getElementById('selectRadio');
+    const check = document.getElementById('selectcheck');
     const selectBox = document.getElementById('selectBox');
-    let isChecked = false;
+    let isChecked = true;
     const logTable = document.getElementById("logTableBody");
     let fullData = [];
     let rowsPerPage = 10;
     let currentPage = 1;
+
+    const interval_input = document.getElementById("intervalInput");
+    const interval_value = interval_input.value;
+    const search_sec = document.getElementById("search_sec");
+    const ipinput = document.getElementById("ip_input");
+    const portinput = document.getElementById("port_input");
+    const noinput = document.getElementById("no_input");
 
     function goToPage(page) {
         const baseUrl = "/";
@@ -272,7 +321,7 @@
             ws.addEventListener('open', function once() {
                 connectConfig(true);
                 ws.removeEventListener('open', once);
-                });
+            });
             websocketConfig();
         }
     };
@@ -294,13 +343,13 @@
             try {
                 const parsed = JSON.parse(event.data);
                 if (Array.isArray(parsed)) {
-                fullData = parsed;
-                crondisDataFill(currentPage);
+                    fullData = parsed;
+                    crondisDataFill(currentPage);
                 } else if (Array.isArray(parsed.interval)) {
-                fullData = parsed.interval;
-                crondisDataFill(currentPage);
+                    fullData = parsed.interval;
+                    crondisDataFill(currentPage);
                 } else {
-                console.warn("Unexpected data format", parsed);
+                    console.warn("Unexpected data format", parsed);
                 }
             } catch (e) {
                 console.error("Failed to parse WebSocket message", e);
@@ -310,10 +359,10 @@
     }
 
     function connectConfig(connection) {
-    const conn = document.getElementById("connect");
-    conn.innerHTML = connection
-    ? "<p><b>연결 상태 : Connected</b></p>"
-    : "<p><b>연결 상태 : Disconnected</b></p>";
+        const conn = document.getElementById("connect");
+        conn.innerHTML = connection
+        ? "<p><b>연결 상태 : Connected</b></p>"
+        : "<p><b>연결 상태 : Disconnected</b></p>";
     }
 
 
@@ -323,26 +372,27 @@
         const start = (page - 1) * rowsPerPage;
         const end = start + rowsPerPage;
         const pageData = fullData.slice(start, end);
+        const noInputField = document.getElementById("no_input");
         // console.log("start : " + start + ", end : " + end )
         pageData.forEach(data => {
         const row = document.createElement("tr");
         const rowData = [
-        data.process_pos,
-        data.process_id,
-        data.runmonth,
-        data.runsrtweek == "*" ? "*" : data.runsrtweek + "-" + data.runendweek,
-        data.runday,
-        data.starttime,
-        data.endtime,
-        data.attrib,
-        data.desc,
-        data.run_date,
-        data.run_time,
-        data.pid,
-        data.runcnt,
-        data.laststat,
-        data.path,
-        // data.status,
+            data.process_pos,
+            data.process_id,
+            data.runmonth,
+            data.runsrtweek == "*" ? "*" : data.runsrtweek + "-" + data.runendweek,
+            data.runday,
+            data.starttime,
+            data.endtime,
+            data.attrib,
+            data.desc,
+            data.run_date,
+            data.run_time,
+            data.pid,
+            data.runcnt,
+            data.laststat,
+            data.path,
+            // data.status,
         ];
         let chkatt = "";
         rowData.forEach((val,index) => {
@@ -374,11 +424,52 @@
             row.appendChild(cell);
         });
 
+        // row.addEventListener("click", () => {
+        //     const noInputField = document.getElementById("no_input");
+        //     const firstCellValue = row.cells[0].textContent;
+        //     noInputField.value = firstCellValue;
+        // });
+        // row.addEventListener("contextmenu", () => {
+        //     if(isChecked === false){
+        //         const firstCellValue = row.cells[0].textContent;
+        //         noInputField.value = firstCellValue;
+        //     } else {
+        //         noInputField.value = "0000";
+        //     }
+        // });
+
         row.addEventListener("click", () => {
-            const noInputField = document.getElementById("no_input");
-            const firstCellValue = row.cells[0].textContent;
-            noInputField.value = firstCellValue;
+            // 모든 tr에서 .selected 제거
+            document.querySelectorAll("tbody tr").forEach(tr => tr.classList.remove("selected"));
+
+            // 현재 클릭된 tr에 .selected 추가
+            row.classList.add("selected");
+
+            // no_input에 값 세팅
+            if(isChecked === false){
+                const firstCellValue = row.cells[0].textContent;
+                noInputField.value = firstCellValue;
+            } else {
+                noInputField.value = "0000";
+            }
         });
+
+        row.addEventListener("contextmenu", () => {
+            // 모든 tr에서 .selected 제거
+            document.querySelectorAll("tbody tr").forEach(tr => tr.classList.remove("selected"));
+
+            // 현재 클릭된 tr에 .selected 추가
+            row.classList.add("selected");
+
+            // no_input에 값 세팅
+            if(isChecked === false){
+                const firstCellValue = row.cells[0].textContent;
+                noInputField.value = firstCellValue;
+            } else {
+                noInputField.value = "0000";
+            }
+        });
+        
         logTable.appendChild(row);
         });
 
@@ -387,12 +478,12 @@
     }
 
     function sendMessage() {
-        const interval_input = document.getElementById("intervalInput");
-        const interval_value = interval_input.value;
-        const search_sec = document.getElementById("search_sec");
-        const ipinput = document.getElementById("ip_input");
-        const portinput = document.getElementById("port_input");
-        const noinput = document.getElementById("no_input");
+        // const interval_input = document.getElementById("intervalInput");
+        // const interval_value = interval_input.value;
+        // const search_sec = document.getElementById("search_sec");
+        // const ipinput = document.getElementById("ip_input");
+        // const portinput = document.getElementById("port_input");
+        // const noinput = document.getElementById("no_input");
 
         if (search_sec.innerText = interval_value === "0") {
             search_sec.innerText = "조회 멈춤"
@@ -405,16 +496,13 @@
 
         ip_input = ipinput?.value || "";
         port_input = portinput?.value || "";
-        select_input = isChecked ? parseInt(selectBox.value) : 1;
-        console.log(isChecked);
-        if (isChecked) {
+        select_input = isChecked === false ? parseInt(selectBox.value) : 1;
+        if (isChecked === false) {
             no_input = parseInt(noinput.value);
             console.log(noinput);
         }else {
             no_input = null;
         }
-        // no_input = 43
-        // console.log(selectBox.value);
 
         const jsonData = buildJson();
         ws.send(JSON.stringify(jsonData));
@@ -432,13 +520,13 @@
         };
     }
 
-    radio.addEventListener('click', () => {
+    check.addEventListener('click', () => {
         const noInput = document.getElementById("no_input");
         isChecked = !isChecked;
-        radio.checked = isChecked;
-        selectBox.disabled = !isChecked;
-        noInput.disabled = !isChecked;
-        if (!isChecked) {
+        check.checked = isChecked;
+        selectBox.disabled = isChecked;
+        noInput.disabled = isChecked;
+        if (isChecked) {
             selectBox.selectedIndex = 0;
         }
     });
@@ -449,7 +537,7 @@
         const totalPages = Math.ceil(fullData.length / rowsPerPage);
         const maxButtons = 5;
         if(totalPages === 1){
-        return;
+            return;
         }
 
         const prevBtn = document.createElement("button");
@@ -461,16 +549,16 @@
         let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
         let endPage = startPage + maxButtons - 1;
         if (endPage > totalPages) {
-        endPage = totalPages;
-        startPage = Math.max(1, endPage - maxButtons + 1);
+            endPage = totalPages;
+            startPage = Math.max(1, endPage - maxButtons + 1);
         }
 
         for (let i = startPage; i <= endPage; i++) {
-        const btn = document.createElement("button");
-        btn.textContent = i;
-        btn.disabled = i === currentPage;
-        btn.onclick = () => crondisDataFill(i);
-        pagination.appendChild(btn);
+            const btn = document.createElement("button");
+            btn.textContent = i;
+            btn.disabled = i === currentPage;
+            btn.onclick = () => crondisDataFill(i);
+            pagination.appendChild(btn);
         }
 
         const nextBtn = document.createElement("button");
@@ -481,12 +569,12 @@
     }
 
     function changeRowsPerPage(inputNumber) {
-      rowsPerPage = parseInt(inputNumber);
-      crondisDataFill(1);
+        rowsPerPage = parseInt(inputNumber);
+        crondisDataFill(1);
     }
 
     function makeTableResizable(table) {
-    const cols = table.querySelectorAll("th");
+        const cols = table.querySelectorAll("th");
 
         cols.forEach(th => {
             const resizer = document.createElement("div");
@@ -522,43 +610,96 @@
     });
 
     function limitDigits(input) {
-      // 최대 4자리까지만 허용
-      if (input.value.length > 4) {
-        input.value = input.value.slice(0, 4);
-      }
-      // 최대값 보정
-      if (parseInt(input.value) > 9999) {
-        input.value = 9999;
-      }
+        // 최대 4자리까지만 허용
+        if (input.value.length > 4) {
+            input.value = input.value.slice(0, 4);
+        }
+        // 최대값 보정
+        if (parseInt(input.value) > 9999) {
+            input.value = 9999;
+        }
     }
     
     function stopMessage() {
-      const intervalInput = document.getElementById("intervalInput");
-      if (intervalInput.value === "0") {
-        intervalInput.value = interval_value;
-        search_sec.innerText = intervalInput.value+"초마다 조회 중";
-        stop_button.innerText = "Stop";
-      }
-      else {
-        interval_value = intervalInput.value;
-        intervalInput.value = "0";
-        search_sec.innerText = "조회 멈춤";
-        stop_button.innerText = "Start";
-      }
-      ws.send(JSON.stringify(buildJson()));
-      console.log("stopMessage");
+        const intervalInput = document.getElementById("intervalInput");
+        if (intervalInput.value === "0") {
+            intervalInput.value = interval_value;
+            search_sec.innerText = intervalInput.value+"초마다 조회 중";
+            stop_button.innerText = "Stop";
+        }
+        else {
+            interval_value = intervalInput.value;
+            intervalInput.value = "0";
+            search_sec.innerText = "조회 멈춤";
+            stop_button.innerText = "Start";
+        }
+        ws.send(JSON.stringify(buildJson()));
+        console.log("stopMessage");
     }
 
     function parseDataInfo(raw) {
-      try {
-        const jsonDataArray = JSON.parse(raw);
-        if (jsonDataArray.dataInfo) dataInfo = jsonDataArray.dataInfo;
-        // else console.log("dataInfo 없음");
-      } catch (error) {
-        console.error("Json Parsing Error: ",raw);
-        return;
-      }
+        try {
+            const jsonDataArray = JSON.parse(raw);
+            if (jsonDataArray.dataInfo) dataInfo = jsonDataArray.dataInfo;
+            // else console.log("dataInfo 없음");
+        } catch (error) {
+            console.error("Json Parsing Error: ",raw);
+            return;
+        }
     }
+
+    const target = document.getElementById("logTableBody");
+    const menu = document.getElementById("customMenu");
+
+    // 우클릭 감지
+    target.addEventListener("contextmenu", function(e) {
+        e.preventDefault(); // 기본 메뉴 차단
+        if(isChecked === false){
+    
+            menu.style.top = `${e.pageY}px`;
+            menu.style.left = `${e.pageX}px`;
+            menu.style.display = "block";
+        } else {
+            alert("모니터링 전용 상태입니다.");
+        }
+    });
+
+    check.addEventListener("click", function() {
+        const noInputField = document.getElementById("no_input");
+        if(check.checked === true) {
+            noInputField.value = "0000";
+        }
+    })
+    // 다른 곳 클릭하면 메뉴 닫기
+    document.addEventListener("click", function() {
+        menu.style.display = "none";
+    });
+
+    // 기능 예시
+    function actionOne() {
+        rclickmenu(2);
+    }
+
+    function actionTwo() {
+        rclickmenu(3);
+    }
+    function actionThree() {
+        rclickmenu(4);
+    }
+    // function actionFour() {
+    //     rclickmenu(1);
+    // }
+    function rclickmenu(selectno){
+        ip_input = ipinput?.value || "";
+        port_input = portinput?.value || "";
+        select_input = selectno;
+        no_input = parseInt(noinput.value);
+        
+        const jsonData = buildJson();
+        ws.send(JSON.stringify(jsonData));
+        console.log("전송:", jsonData);
+    }
+
 </script>
 
 </body>
