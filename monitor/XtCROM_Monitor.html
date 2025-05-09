@@ -354,6 +354,8 @@
                     chkatt = "ONCE";
                 } else if (val === "FOREVER") {
                     chkatt = "FOREVER";
+                } else if (val === "NONE") {
+                    chkatt = "NONE";
                 }
             }
             if(index === 11 && val === "     -1"){
@@ -363,6 +365,9 @@
                 } else if(chkatt === "FOREVER") {
                     chkatt = "";
                     row.style.backgroundColor = "#ff0000";
+                } else if(chkatt === "NONE") {
+                    chkatt = "";
+                    row.style.backgroundColor = "#d2d2d2";
                 }
             }
             cell.textContent = val ?? "-";
