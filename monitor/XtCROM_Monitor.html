@@ -49,11 +49,8 @@
         width: 100%;
         margin: 20px auto;
         border-collapse: collapse;
-        table-layout: fixed;
-
-        width: 100%;
-        margin: 20px auto;
-        border-collapse: collapse;
+        /* table-layout: fixed; */
+        min-width: 800px;
         table-layout: auto; /* 자동 열 너비 설정 */
     }
 
@@ -62,11 +59,7 @@
         padding: 4px;
         text-align: center;
         word-wrap: break-word;
-
-        border: 1px solid #ccc;
-        padding: 4px;
-        text-align: center;
-        white-space: nowrap; /* 줄바꿈 없이 가로 확장 */
+        /* white-space: nowrap; 줄바꿈 없이 가로 확장 */
     }
 
     table tr:hover td {
@@ -137,8 +130,11 @@
     }
     #tableContainer {
         overflow-y: auto;
-        display: flex;
+        overflow-x: auto;  /* 수평 스크롤 */
+        /* display: flex; */
         justify-content: center;
+        display: block; /* flex → block 으로 변경 */
+        width: 100%;
     }
     .tab-content {
         /* display: none; */
@@ -348,11 +344,32 @@
         data.path,
         // data.status,
         ];
-        rowData.forEach(val => {
+        let chkatt = "";
+        rowData.forEach((val,index) => {
             const cell = document.createElement("td");
+            console.log(index);
+            if(index === 7){
+                if(val === "SEPARATOR"){
+                    row.style.backgroundColor = "#ffff00"
+                } else if (val === "ONCE"){
+                    chkatt = "ONCE";
+                } else if (val === "FOREVER") {
+                    chkatt = "FOREVER";
+                }
+            }
+            if(index === 11 && val === "     -1"){
+                if (chkatt === "ONCE"){
+                    chkatt = "";
+                    row.style.backgroundColor = "#d2d2d2";
+                } else if(chkatt === "FOREVER") {
+                    chkatt = "";
+                    row.style.backgroundColor = "#ff0000";
+                }
+            }
             cell.textContent = val ?? "-";
             row.appendChild(cell);
         });
+
         row.addEventListener("click", () => {
             const noInputField = document.getElementById("no_input");
             const firstCellValue = row.cells[0].textContent;
